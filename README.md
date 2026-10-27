@@ -9,7 +9,7 @@ Tiny Tailors is a dress-up web app for kids. You pick a critter, then mix and ma
 
 | Drawer | Choices |
 | --- | --- |
-| Critters | 33 animals (kitty, bunny, panda, axolotl, unicorn, dragon, red panda…) + 15 fur colors |
+| Critters | 34 animals (kitty, bunny, panda, axolotl, unicorn, dragon, red panda, cockatiel…) + 15 fur colors |
 | Face | 11 eye styles, 10 mouths, 5 cheek styles, 10 moods |
 | Hair | 13 styles in 20 colors |
 | Tops | 30 (hoodie, princess gown, knight armor, space suit, kimono…) |
