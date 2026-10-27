@@ -453,3 +453,15 @@ body.big .tab { width: 88px; }
 .parade svg { flex: 0 1 auto; min-width: 0; }
 
 .score-note { margin: -6px auto 14px; max-width: 46ch; color: var(--ink-soft); font-weight: 700; text-wrap: balance; }
+
+/* rarity tiers */
+.price.r-common { background: var(--butter); }
+.price.r-rare { background: #bfe3ff; }
+.price.r-super { background: #dcc8ff; }
+.price.r-legend { background: linear-gradient(135deg, #ffe17a, #ffb3d1, #b8e8ff); }
+.rarity { display: inline-block; font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; border: 2px solid var(--ink); border-radius: 999px; padding: 1px 10px; margin-bottom: 4px; }
+.rarity.r-common { background: var(--butter); }
+.rarity.r-rare { background: #bfe3ff; }
+.rarity.r-super { background: #dcc8ff; }
+.rarity.r-legend { background: linear-gradient(135deg, #ffe17a, #ffb3d1, #b8e8ff); }
+.tiers { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 14px; }

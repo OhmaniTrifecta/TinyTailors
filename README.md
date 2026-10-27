@@ -32,7 +32,7 @@ Most clothes come in **20 colors** (plus a color mixer), a second **trim color**
 - **Poses & moods**: 11 poses (wave, hooray, dab, ballerina…) where sleeves and held items follow the arms, 10 one-tap moods, and a **Dance!** button with music.
 - **Two colors per item**: pick a main color and a trim color (collars, cuffs, bows, and the second color in fabric patterns), or mix any color with the color mixer.
 - **Fabric studio**: draw an 8×8 tile and it repeats across clothes. Empty squares take the clothing color, so one fabric works in every color.
-- **Stitches & unlockables**: earn stitches and spend them on 54 locked goodies: 6 rare critters (capybara, narwhal, alpaca…), gold and cosmic colors, galaxy and glitter fabrics, gowns, wings, hats, pets, scenes, effects and poses.
+- **Stitches & unlockables**: earn stitches and spend them on 52 locked goodies in four rarity tiers (Common, Rare, Super rare, Legendary, from 40 to 335 stitches): 6 rare critters (capybara, narwhal, alpaca…), gold and cosmic colors, galaxy and glitter fabrics, gowns, wings, hats, pets, scenes, effects and poses.
 - **Style challenges with a real judge**: 32 challenges. Every item has theme tags, and each challenge is a set of rules (enough beach items? the right scene? one color head to toe? three patterns?). The judge scores each rule, gives 1 to 5 stars and tells you exactly what to add.
 - **Daily challenge**: the same challenge for everyone each day, double stitches and a streak bonus.
 - **No spamming for stitches**: a challenge only pays with 3 stars or more (a score of 55+), only once a day for each challenge, and regular challenges pay at most 45 stitches a day.

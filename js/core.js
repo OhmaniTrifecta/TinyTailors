@@ -101,10 +101,10 @@ window.TT = window.TT || {};
     { id: 'cocoa', name: 'Cocoa', hex: '#b88a6e' },
     { id: 'cloud', name: 'Cloud', hex: '#ffffff' },
     { id: 'night', name: 'Midnight', hex: '#5f5a7a' },
-    { id: 'gold', name: 'Gold', hex: '#f2c14e', locked: 15 },
-    { id: 'silver', name: 'Silver', hex: '#cfd5e3', locked: 15 },
-    { id: 'rosegold', name: 'Rose gold', hex: '#efb3a3', locked: 15 },
-    { id: 'cosmic', name: 'Cosmic', hex: '#3d3478', locked: 15 }
+    { id: 'gold', name: 'Gold', hex: '#f2c14e', locked: 55 },
+    { id: 'silver', name: 'Silver', hex: '#cfd5e3', locked: 40 },
+    { id: 'rosegold', name: 'Rose gold', hex: '#efb3a3', locked: 50 },
+    { id: 'cosmic', name: 'Cosmic', hex: '#3d3478', locked: 65 }
   ];
   TT.FUR = [
     { id: 'natural', name: 'Natural', hex: null },
@@ -120,8 +120,8 @@ window.TT = window.TT || {};
     { id: 'seafoam', name: 'Seafoam', hex: '#b5ecd8' },
     { id: 'babyblue', name: 'Baby blue', hex: '#bfe0ff' },
     { id: 'lemon', name: 'Lemon', hex: '#fff09a' },
-    { id: 'goldfur', name: 'Golden', hex: '#f2c14e', locked: 20 },
-    { id: 'starry', name: 'Starry night', hex: '#6f63b8', locked: 20 }
+    { id: 'goldfur', name: 'Golden', hex: '#f2c14e', locked: 85 },
+    { id: 'starry', name: 'Starry night', hex: '#6f63b8', locked: 105 }
   ];
 
   /* ---------- fabric patterns ---------- */
@@ -138,11 +138,11 @@ window.TT = window.TT || {};
     { id: 'rainbow', name: 'Rainbow' },
     { id: 'spots', name: 'Cow spots' },
     { id: 'checker', name: 'Checkers' },
-    { id: 'galaxy', name: 'Galaxy', locked: 25 },
-    { id: 'glitter', name: 'Glitter', locked: 20 },
-    { id: 'leopard', name: 'Leopard', locked: 20 },
-    { id: 'strawberries', name: 'Strawberries', locked: 20 },
-    { id: 'clouds', name: 'Fluffy clouds', locked: 20 }
+    { id: 'galaxy', name: 'Galaxy', locked: 110 },
+    { id: 'glitter', name: 'Glitter', locked: 85 },
+    { id: 'leopard', name: 'Leopard', locked: 65 },
+    { id: 'strawberries', name: 'Strawberries', locked: 65 },
+    { id: 'clouds', name: 'Fluffy clouds', locked: 70 }
   ];
   TT.patternDef = function (id, kind, base, accent) {
     if (!kind || kind === 'solid') return '';

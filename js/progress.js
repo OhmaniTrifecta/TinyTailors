@@ -3,7 +3,7 @@
 (function (TT) {
   const KEY = 'tinytailors.progress';
   const load = () => { try { return JSON.parse(localStorage.getItem(KEY)) || null; } catch (e) { return null; } };
-  const fresh = () => ({ stitches: 25, unlocked: [], daily: { date: '', best: 0 }, streak: 0, lastDaily: '', best: {}, perDay: {}, favs: [], fabrics: [], seen: {},
+  const fresh = () => ({ stitches: 40, unlocked: [], daily: { date: '', best: 0 }, streak: 0, lastDaily: '', best: {}, perDay: {}, favs: [], fabrics: [], seen: {},
     settings: { sound: true, speak: false, calm: false, big: false } });
   const P = Object.assign(fresh(), load() || {});
   P.settings = Object.assign(fresh().settings, P.settings || {});
@@ -22,11 +22,13 @@
     save();
     return true;
   };
+  /* rarity tiers by price, shown on price tags and in the unlock window */
+  TT.rarity = n => n >= 220 ? { id: 'legend', name: 'Legendary' } : n >= 150 ? { id: 'super', name: 'Super rare' } : n >= 80 ? { id: 'rare', name: 'Rare' } : { id: 'common', name: 'Common' };
   TT.countUnlockables = function () {
     let total = 0, got = 0;
     const visit = (kind, list) => list.forEach(o => { if (o.locked) { total++; if (!TT.isLocked(kind, o)) got++; } });
     for (const [slot, S] of Object.entries(TT.SLOTS)) visit(slot, S.items);
-    visit('color', TT.COLORS); visit('fur', TT.FUR); visit('pattern', TT.PATTERNS); visit('pose', TT.POSES);
+    visit('color', TT.COLORS); visit('fur', TT.FUR); visit('pattern', TT.PATTERNS);
     return { total, got };
   };
 
