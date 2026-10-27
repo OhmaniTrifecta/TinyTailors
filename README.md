@@ -35,6 +35,7 @@ Most clothes come in **20 colors** (plus a color mixer), a second **trim color**
 - **Stitches & unlockables**: earn stitches and spend them on 54 locked goodies: 6 rare critters (capybara, narwhal, alpaca…), gold and cosmic colors, galaxy and glitter fabrics, gowns, wings, hats, pets, scenes, effects and poses.
 - **Style challenges with a real judge**: 32 challenges. Every item has theme tags, and each challenge is a set of rules (enough beach items? the right scene? one color head to toe? three patterns?). The judge scores each rule, gives 1 to 5 stars and tells you exactly what to add.
 - **Daily challenge**: the same challenge for everyone each day, double stitches and a streak bonus.
+- **No spamming for stitches**: a challenge only pays with 3 stars or more (a score of 55+), only once a day for each challenge, and regular challenges pay at most 45 stitches a day.
 - **Fashion show**: pick 2 to 5 saved looks and they strut the runway with music, camera flashes and a cheer meter.
 - **Group photo**: put 2 to 4 saved critters in one picture.
 - **Share codes**: every look turns into a code (and a link like `yoursite.vercel.app/#look=TT1-…`). Friends paste it to wear the exact look, custom fabrics included.

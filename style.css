@@ -451,3 +451,5 @@ body.big .tab { width: 88px; }
 .title { grid-template-columns: minmax(0, 1fr); }
 .title-inner { min-width: 0; justify-self: center; }
 .parade svg { flex: 0 1 auto; min-width: 0; }
+
+.score-note { margin: -6px auto 14px; max-width: 46ch; color: var(--ink-soft); font-weight: 700; text-wrap: balance; }

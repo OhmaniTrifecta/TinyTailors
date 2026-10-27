@@ -345,11 +345,23 @@
       <p class="score-word">${words} <b>${res.score}</b>/100</p>
       <p class="score-ch">${esc(challenge.ch.text)}</p>
       <ul class="score-lines">${res.lines.map(l => `<li class="${l.good ? 'ok' : 'tip'}"><span>${l.good ? '✓' : '✎'}</span><div>${esc(l.msg)}</div><b>${l.pts}/${l.w}</b></li>`).join('')}</ul>
-      <p class="score-earn">${rw.earned ? `${SPOOL} +${rw.earned} stitches` : 'Beat your best score today to earn more stitches.'}${rw.streakUp ? ` · 🔥 ${rw.streak}-day streak!` : ''}</p>
+      <p class="score-earn">${rw.earned ? `${SPOOL} +${rw.earned} stitches` : ''}${rw.streakUp ? ` · 🔥 ${rw.streak}-day streak!` : ''}</p>
+      ${earnNote(rw, challenge.daily)}
       <div class="score-actions"><button class="btn-soft" type="button" data-close>Keep styling</button><button class="btn-big" type="button" data-newch>New challenge</button></div></div>`, 'score-card');
     if (res.stars >= 4) { Sound.cheer(); celebrate('confetti'); } else Sound.sparkle();
     if (rw.earned) renderWallet(true);
     if (challenge.daily) setChallenge(challenge.ch, true);
+  }
+
+  function earnNote(rw, daily) {
+    const msg = {
+      low: `Score ${TT.MIN_SCORE} or more (${TT.MIN_STARS} stars) to earn stitches. Follow the tips above and try again!`,
+      nobetter: 'You already earned stitches for this score today. Get more stars to earn more.',
+      cap: `You've earned today's ${TT.DAILY_CAP} challenge stitches. Come back tomorrow, or try the daily challenge!`,
+      capped: `That's the last of today's ${TT.DAILY_CAP} challenge stitches. The daily challenge still pays!`
+    }[rw.reason];
+    const left = !daily && !rw.reason ? `<p class="score-note">${rw.capLeft} challenge stitches left to earn today.</p>` : '';
+    return msg ? `<p class="score-note">${msg}</p>` : left;
   }
 
   /* ---------------- closet, shows & group photos ---------------- */
@@ -626,7 +638,7 @@
       const u = TT.countUnlockables();
       sheet('Your stitches', `<div class="wallet-big">${SPOOL}<b>${PR.stitches}</b></div>
         <p class="modal-sub">Spend stitches on anything with a 🔒. You've unlocked ${u.got} of ${u.total}.</p>
-        <ul class="earn-list"><li><b>Daily challenge</b> 6 stitches a star, plus a streak bonus</li><li><b>Any challenge</b> 3 stitches a star (beat your best to earn more)</li>
+        <ul class="earn-list"><li><b>Daily challenge</b> 6 stitches a star when you get 3 stars or more, plus a streak bonus</li><li><b>Any challenge</b> 3 stitches a star when you get 3 stars or more, up to ${TT.DAILY_CAP} a day (${TT.challengeCapLeft()} left today)</li>
         <li><b>Fashion show</b> 8 stitches, twice a day</li><li><b>Photos</b> 3 for your first photo and 3 for your first group photo each day</li><li><b>Sharing a look</b> 2 a day</li></ul>
         <button class="btn-big" type="button" data-gochallenge>Earn stitches now</button>`);
     });
