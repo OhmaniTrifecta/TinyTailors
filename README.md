@@ -9,32 +9,39 @@ Tiny Tailors is a dress-up web app for kids. You pick a critter, then mix and ma
 
 | Drawer | Choices |
 | --- | --- |
-| Critters | 27 animals (kitty, bunny, panda, axolotl, unicorn, dragon, red panda…) + 13 fur colors |
-| Face | 10 eye styles, 8 mouths, 5 cheek styles |
-| Hair | 13 styles in 16 colors |
-| Tops | 26 (hoodie, princess gown, knight armor, space suit, kimono…) |
-| Bottoms | 17 (tutu, overalls, mermaid tail, grass skirt…) |
-| Shoes | 14 (bunny slippers, roller skates, light-up kicks…) |
-| Hats | 27 (crown, witch hat, strawberry hat, space helmet…) |
-| Specs & face fun | 15 |
-| Neckwear | 11 |
-| Wings & capes | 12 |
-| Things to hold | 20 |
-| Pet pals | 15 |
-| Scenes | 19 (Tailor's shop, outer space, candy land, under the sea…) |
-| Magic effects | 11 animated effects |
+| Critters | 33 animals (kitty, bunny, panda, axolotl, unicorn, dragon, red panda…) + 15 fur colors |
+| Face | 11 eye styles, 10 mouths, 5 cheek styles, 10 moods |
+| Hair | 13 styles in 20 colors |
+| Tops | 30 (hoodie, princess gown, knight armor, space suit, kimono…) |
+| Bottoms | 19 (tutu, overalls, mermaid tail, grass skirt…) |
+| Shoes | 16 (bunny slippers, roller skates, light-up kicks…) |
+| Hats | 32 (crown, witch hat, strawberry hat, space helmet…) |
+| Specs & face fun | 17 |
+| Neckwear | 13 |
+| Wings & capes | 15 |
+| Things to hold | 23 |
+| Pet pals | 19 |
+| Scenes | 22 (Tailor's shop, outer space, candy land, under the sea…) |
+| Magic effects | 14 animated effects |
+| Poses | 11 |
 
-Most clothes come in **16 colors** and **12 fabric patterns** (stripes, polka dots, hearts, stars, gingham, flowers, zigzag, plaid, rainbow, cow spots, checkers). That adds up to about **4 undecillion** different looks.
+Most clothes come in **20 colors** (plus a color mixer), a second **trim color**, and **17 fabric patterns** plus fabrics you design yourself. That adds up to more than **900 quindecillion** different looks.
 
 ### Features
 - **Surprise me!** builds a random outfit with a matching color story. Lock any drawer to keep it when you shuffle.
-- **Undo / Redo** (also Ctrl/⌘ + Z).
-- **Name your critter** with your own name or a silly random one.
-- **Snap photo** makes a picture card you can download.
-- **Save look** hangs the outfit in your closet (saved on this device).
-- **Style challenge** gives you a theme like "Spooky… but make it cute".
-- Little sounds, blinking eyes, wagging tails, bouncing pets.
-- Works on phones, tablets and computers. Sound can be turned off.
+- **Poses & moods**: 11 poses (wave, hooray, dab, ballerina…) where sleeves and held items follow the arms, 10 one-tap moods, and a **Dance!** button with music.
+- **Two colors per item**: pick a main color and a trim color (collars, cuffs, bows, and the second color in fabric patterns), or mix any color with the color mixer.
+- **Fabric studio**: draw an 8×8 tile and it repeats across clothes. Empty squares take the clothing color, so one fabric works in every color.
+- **Stitches & unlockables**: earn stitches and spend them on 54 locked goodies: 6 rare critters (capybara, narwhal, alpaca…), gold and cosmic colors, galaxy and glitter fabrics, gowns, wings, hats, pets, scenes, effects and poses.
+- **Style challenges with a real judge**: 32 challenges. Every item has theme tags, and each challenge is a set of rules (enough beach items? the right scene? one color head to toe? three patterns?). The judge scores each rule, gives 1 to 5 stars and tells you exactly what to add.
+- **Daily challenge**: the same challenge for everyone each day, double stitches and a streak bonus.
+- **Fashion show**: pick 2 to 5 saved looks and they strut the runway with music, camera flashes and a cheer meter.
+- **Group photo**: put 2 to 4 saved critters in one picture.
+- **Share codes**: every look turns into a code (and a link like `yoursite.vercel.app/#look=TT1-…`). Friends paste it to wear the exact look, custom fabrics included.
+- **Printable paper doll** and **coloring page**: the critter on a stand plus every clothing piece with fold-over tabs, printed to scale.
+- **Search & Faves**: search all 400+ items, and star favorites into their own drawer.
+- **Settings**: sound, read item names out loud, calm mode (no animations), bigger buttons.
+- **Undo / Redo**, name tag with random silly names, photos, closet, drag your pet anywhere.
 
 ## Put it on GitHub and Vercel
 
@@ -78,9 +85,16 @@ js/animals.js              the critters, faces and tails
 js/wardrobe-clothes.js     tops, bottoms, shoes
 js/wardrobe-accessories.js hats, hair, specs, neckwear, wings, things to hold
 js/world.js                pet pals, scenes, magic effects
-js/render.js               puts a critter together
-js/sound.js                little synth sounds
-js/app.js                  buttons, drawers, closet, photos, challenges
+js/extras.js               unlockable items, poses, moods
+js/render.js               puts a critter together (poses, colors, fabrics)
+js/challenges.js           item theme tags, challenges and the judge
+js/progress.js             stitches, unlocks, streaks, faves, settings
+js/fabric.js               the fabric studio
+js/share.js                share codes
+js/sound.js                little synth sounds and music
+js/show.js                 fashion show and group photos
+js/paperdoll.js            printable paper doll and coloring page
+js/app.js                  buttons, drawers, closet, everything you tap
 ```
 
 ### Adding a new item

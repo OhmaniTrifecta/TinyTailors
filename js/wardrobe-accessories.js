@@ -57,8 +57,14 @@
       C(200, 70, 4, c.fill, 2) + S('M200,70 L268,82 L270,114', c.fill, 3) + P('M264,112 L276,112 L278,130 L262,130Z', c.fill, 2.5), { thumbY: 1 }),
     I('pirate', 'Pirate hat', c => P('M108,106 Q118,58 200,54 Q282,58 292,106 Q250,86 200,96 Q150,86 108,106Z', '#4f4560') + S('M112,102 Q150,84 200,92 Q250,84 288,102', GOLD, 4) +
       C(200, 74, 10, '#ffffff', 2.5) + C(196, 73, 2, INK, 0) + C(204, 73, 2, INK, 0) + S('M188,88 L212,96 M212,88 L188,96', '#ffffff', 3), { fixed: 1 }),
-    I('astro', 'Space helmet', () => `<circle cx="200" cy="165" r="128" fill="#d8f0ff" fill-opacity=".22" stroke="${OL}" stroke-width="5"/>` +
-      `<circle cx="200" cy="165" r="122" fill="none" stroke="#ffffff" stroke-width="5" opacity=".9"/>` + S('M110,120 Q130,72 182,56', '#ffffff', 9, 'opacity=".85"') + C(118, 146, 6, '#ffffff', 0, 'opacity=".85"'), { fixed: 1 }),
+    I('astro', 'Space helmet', (c, x) => {
+      // critters with tall ears, horns or antlers get a taller bubble so nothing pokes out
+      const tall = x && x.a && x.a.tall;
+      const g = tall ? { cy: 152, rx: 138, ry: 150 } : { cy: 165, rx: 128, ry: 128 };
+      return `<ellipse cx="200" cy="${g.cy}" rx="${g.rx}" ry="${g.ry}" fill="#d8f0ff" fill-opacity=".22" stroke="${OL}" stroke-width="5"/>` +
+        `<ellipse cx="200" cy="${g.cy}" rx="${g.rx - 6}" ry="${g.ry - 6}" fill="none" stroke="#ffffff" stroke-width="5" opacity=".9"/>` +
+        S(tall ? 'M98,110 Q116,40 176,12' : 'M110,120 Q130,72 182,56', '#ffffff', 9, 'opacity=".85"') + C(tall ? 104 : 118, tall ? 120 : 146, 6, '#ffffff', 0, 'opacity=".85"');
+    }, { fixed: 1 }),
     I('strawberry', 'Strawberry hat', () => P('M118,118 Q112,48 200,44 Q288,48 282,118 Q200,104 118,118Z', '#ff6f86') +
       [[150, 84], [180, 66], [214, 70], [246, 86], [170, 100], [228, 102], [200, 90], [140, 106], [262, 106]].map(([x, y]) => E(x, y, 3, 4.5, '#fff1a8', 0)).join('') +
       P('M200,52 L178,40 L192,52 L170,58 L200,60 L230,58 L208,52 L222,40Z', '#7fcf8f', 3) + S('M200,48 L204,32', '#6bb27a', 5), { fixed: 1 }),

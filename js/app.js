@@ -2,20 +2,23 @@
 (function (TT) {
   const $ = s => document.querySelector(s);
   const Sound = TT.Sound;
+  const PR = TT.progress;
   const store = {
     get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
     set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } }
   };
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
   /* ---------------- state ---------------- */
   const DEFAULT = {
     animal: { id: 'cat', color: 'natural' }, eyes: { id: 'sparkle' }, mouth: { id: 'cat' }, blush: { id: 'rosy' },
     hair: { id: null, color: 'cocoa' },
-    top: { id: 'sailor', color: 'cloud', pattern: 'solid' }, bottom: { id: 'pleated', color: 'bubblegum', pattern: 'gingham' },
-    shoes: { id: 'maryjanes', color: 'strawberry' }, hat: { id: 'beret', color: 'strawberry', pattern: 'solid' },
-    face: { id: null, color: 'lavender' }, neck: { id: null, color: 'butter', pattern: 'solid' }, back: { id: null, color: 'lavender', pattern: 'solid' },
-    hold: { id: 'balloon', color: 'mint' }, pet: { id: 'chick', color: 'bubblegum' }, scene: { id: 'tailor' }, fx: { id: 'sparkles' },
-    name: 'Mochi'
+    top: { id: 'sailor', color: 'cloud', color2: null, pattern: 'solid' }, bottom: { id: 'pleated', color: 'bubblegum', color2: null, pattern: 'gingham' },
+    shoes: { id: 'maryjanes', color: 'strawberry', color2: null }, hat: { id: 'beret', color: 'strawberry', color2: null, pattern: 'solid' },
+    face: { id: null, color: 'lavender', color2: null }, neck: { id: null, color: 'butter', color2: null, pattern: 'solid' },
+    back: { id: null, color: 'lavender', color2: null, pattern: 'solid' }, hold: { id: 'balloon', color: 'mint', color2: null },
+    pet: { id: 'chick', color: 'bubblegum' }, scene: { id: 'tailor' }, fx: { id: 'sparkles' }, pose: { id: 'wave' },
+    petPos: null, name: 'Mochi'
   };
   const clone = o => JSON.parse(JSON.stringify(o));
   function sanitize(s) {
@@ -24,24 +27,31 @@
     for (const slot of Object.keys(TT.SLOTS)) {
       const e = s[slot]; if (!e || typeof e !== 'object') continue;
       const S = TT.SLOTS[slot];
+      if (!out[slot]) out[slot] = { id: null };
       if (e.id === null && S.none) out[slot].id = null;
       else if (S.items.some(i => i.id === e.id)) out[slot].id = e.id;
       const pal = S.palette;
-      if (pal && pal.some(p => p.id === e.color)) out[slot].color = e.color;
-      if (S.patterns && TT.PATTERNS.some(p => p.id === e.pattern)) out[slot].pattern = e.pattern;
+      if (pal && (pal.some(p => p.id === e.color) || TT.isHex(e.color))) out[slot].color = e.color;
+      if (S.trim) out[slot].color2 = (pal.some(p => p.id === e.color2) || TT.isHex(e.color2)) ? e.color2 : null;
+      if (S.patterns && TT.patternExists(e.pattern)) out[slot].pattern = e.pattern || 'solid';
     }
     if (typeof s.name === 'string') out.name = s.name.slice(0, 24);
+    if (s.petPos && isFinite(s.petPos.x) && isFinite(s.petPos.y)) out.petPos = { x: +s.petPos.x, y: +s.petPos.y };
     return out;
   }
   let state = sanitize(store.get('tinytailors.current', null));
-  const history = [JSON.stringify(state)];
+  let history = [JSON.stringify(state)];
   let hIndex = 0;
   let locks = new Set(store.get('tinytailors.locks', []));
+  let dancePose = null, danceTimer = null;
+  let challenge = null; // {ch, daily}
+  let query = '';
 
   /* ---------------- tabs ---------------- */
   const TABS = [
     { id: 'critter', label: 'Critter', slots: ['animal'], icon: 'animal:cat' },
-    { id: 'face', label: 'Face', slots: ['eyes', 'mouth', 'blush'], icon: 'face' },
+    { id: 'face', label: 'Face', slots: ['mood', 'eyes', 'mouth', 'blush'], icon: 'face' },
+    { id: 'pose', label: 'Pose', slots: ['pose'], icon: 'pose' },
     { id: 'hair', label: 'Hair', slots: ['hair'], icon: 'hair:buns' },
     { id: 'top', label: 'Tops', slots: ['top'], icon: 'top:tee' },
     { id: 'bottom', label: 'Bottoms', slots: ['bottom'], icon: 'bottom:skirt' },
@@ -53,92 +63,156 @@
     { id: 'hold', label: 'Hold', slots: ['hold'], icon: 'hold:icecream' },
     { id: 'pet', label: 'Pets', slots: ['pet'], icon: 'pet:chick' },
     { id: 'scene', label: 'Scenes', slots: ['scene'], icon: 'scene:meadow' },
-    { id: 'fx', label: 'Magic', slots: ['fx'], icon: 'fx' }
+    { id: 'fx', label: 'Magic', slots: ['fx'], icon: 'fx' },
+    { id: 'faves', label: 'Faves', slots: [], icon: 'faves' }
   ];
   let activeTab = store.get('tinytailors.tab', 'critter');
   if (!TABS.some(t => t.id === activeTab)) activeTab = 'critter';
 
   const LOCK_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="3" fill="#fff"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
   const UNLOCK_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="3" fill="#fff"/><path d="M8 11V8a4 4 0 0 1 7.5-2"/></svg>';
+  const SPOOL = '<svg viewBox="0 0 24 24" aria-hidden="true" class="spool"><rect x="5" y="3" width="14" height="4" rx="1.5" fill="#c99a6e" stroke="#5b3f58" stroke-width="1.6"/><rect x="5" y="17" width="14" height="4" rx="1.5" fill="#c99a6e" stroke="#5b3f58" stroke-width="1.6"/><rect x="7" y="7" width="10" height="10" fill="#ff6f96" stroke="#5b3f58" stroke-width="1.6"/><path d="M7 10h10M7 13h10" stroke="#ffb3c8" stroke-width="1.4"/></svg>';
+  TT.SPOOL = SPOOL;
 
   function tabIcon(t) {
     const pink = clone(state);
-    ['top', 'bottom', 'shoes', 'hat', 'hair', 'face', 'neck', 'back', 'hold', 'pet'].forEach(s => { pink[s].color = 'bubblegum'; });
+    ['top', 'bottom', 'shoes', 'hat', 'hair', 'face', 'neck', 'back', 'hold', 'pet'].forEach(s => { pink[s].color = 'bubblegum'; pink[s].color2 = null; });
     pink.animal = { id: 'cat', color: 'natural' };
     if (t.icon === 'face') return TT.thumb('eyes', TT.itemOf('eyes', 'sparkle'), pink);
     if (t.icon === 'fx') return TT.svg(TT.star(50, 50, 30, '#ffe17a', 5) + TT.star(80, 20, 10, '#ff9ec0', 3) + TT.star(20, 80, 8, '#9ee6c0', 3), '0 0 100 100');
+    if (t.icon === 'faves') return TT.svg(TT.heart(50, 54, 30, '#ff6f96', 5) + TT.star(80, 22, 9, '#ffe17a', 3), '0 0 100 100');
+    if (t.icon === 'pose') return TT.svg(TT.TUBE('M50,92 L50,48', 18, '#ffc98f') + TT.TUBE('M50,58 L22,24', 12, '#ffc98f') + TT.TUBE('M50,58 L80,26', 12, '#ffc98f') + TT.C(50, 34, 16, '#ffc98f', 5) + TT.star(86, 14, 8, '#ffe17a', 3), '0 0 100 100');
     const [slot, id] = t.icon.split(':');
     if (slot === 'shoes') return TT.svg(TT.itemOf(slot, id).draw(TT.pack('#ff9ec0'), {}), '140 380 120 54');
     return TT.thumb(slot, TT.itemOf(slot, id), pink);
   }
   function renderTabs() {
     $('#tabs').innerHTML = TABS.map(t => {
-      const locked = t.slots.every(s => locks.has(s));
+      const locked = t.slots.length && t.slots.filter(s => TT.SLOTS[s]).every(s => locks.has(s));
       return `<button class="tab" role="tab" id="tab-${t.id}" aria-selected="${t.id === activeTab}" aria-controls="drawer" data-tab="${t.id}">
         ${tabIcon(t)}<span>${t.label}</span>${locked ? `<span class="lock-badge" title="Locked">${LOCK_SVG}</span>` : ''}</button>`;
     }).join('');
   }
 
-  /* ---------------- drawer ---------------- */
-  function swatchFor(slot, p, e) {
-    const pressed = e.color === p.id;
-    if (slot === 'animal' && !p.hex) return `<button class="swatch natural" data-act="color" data-slot="${slot}" data-val="${p.id}" aria-pressed="${pressed}" aria-label="${p.name}" title="${p.name}"></button>`;
-    return `<button class="swatch" style="background:${p.hex}" data-act="color" data-slot="${slot}" data-val="${p.id}" aria-pressed="${pressed}" aria-label="${p.name}" title="${p.name}"></button>`;
+  /* ---------------- drawer pieces ---------------- */
+  const kindOf = slot => slot === 'animal' ? 'animal' : slot;
+  const lockedItem = (slot, it) => it && TT.isLocked(kindOf(slot), it);
+  const priceTag = n => `<span class="price">${SPOOL}${n}</span>`;
+
+  function itemButton(slot, it, extra = '') {
+    const e = state[slot] || {};
+    const locked = lockedItem(slot, it);
+    const pressed = it ? e.id === it.id : !e.id;
+    const fav = it && TT.isFav(slot, it.id);
+    const label = it ? it.name : 'None';
+    return `<button class="item${extra}${locked ? ' is-locked' : ''}" data-act="item" data-slot="${slot}" data-val="${it ? it.id : ''}" aria-pressed="${pressed}"
+      aria-label="${esc(label)}${locked ? `, locked, ${it.locked} stitches` : ''}">${TT.thumb(slot, it, state)}<span>${esc(label)}</span>
+      ${locked ? priceTag(it.locked) : ''}${fav ? '<i class="fav-badge" aria-hidden="true">★</i>' : ''}</button>`;
   }
-  function patternSwatch(slot, p, e) {
+  function swatch(slot, which, p) {
+    const e = state[slot];
+    const cur = which === 'color2' ? e.color2 : e.color;
+    const kind = slot === 'animal' ? 'fur' : 'color';
+    const locked = p.locked && TT.isLocked(kind, p);
+    const style = p.hex ? `background:${p.hex}` : '';
+    return `<button class="swatch${p.hex ? '' : (slot === 'animal' ? ' natural' : '')}${locked ? ' is-locked' : ''}" style="${style}" data-act="${which}" data-slot="${slot}" data-val="${p.id}"
+      aria-pressed="${cur === p.id}" aria-label="${p.name}${locked ? `, locked, ${p.locked} stitches` : ''}" title="${p.name}${locked ? ` · ${p.locked} stitches` : ''}">${locked ? '<i class="sw-lock">🔒</i>' : ''}</button>`;
+  }
+  function mixer(slot, which) {
+    const e = state[slot]; const cur = which === 'color2' ? e.color2 : e.color;
+    const isCustom = TT.isHex(cur);
+    return `<label class="swatch mixer${isCustom ? ' has-color' : ''}" style="${isCustom ? `background:${cur}` : ''}" title="Mix your own color" aria-pressed="${isCustom}">
+      <input type="color" data-act="mix" data-which="${which}" data-slot="${slot}" value="${isCustom ? cur : (TT.colorHex(slot, cur) || '#ff9ec0')}" aria-label="Mix your own color">${isCustom ? '' : '<span aria-hidden="true">+</span>'}</label>`;
+  }
+  function patternSwatch(slot, p) {
+    const e = state[slot];
     const base = TT.colorHex(slot, e.color);
-    const id = `sw-${p.id}`;
-    const def = TT.patternDef(id, p.id, base);
+    const id = `sw-${slot}-${p.id}`;
+    const def = TT.patternDef(id, p.id, base, TT.trimHex(slot, e));
+    const locked = p.locked && TT.isLocked('pattern', p);
     const inner = `<defs>${def}</defs><rect width="40" height="40" fill="${def ? `url(#${id})` : base}"/>`;
-    return `<button class="swatch" data-act="pattern" data-slot="${slot}" data-val="${p.id}" aria-pressed="${(e.pattern || 'solid') === p.id}" aria-label="${p.name}" title="${p.name}">${TT.svg(inner, '0 0 40 40')}</button>`;
+    return `<button class="swatch${locked ? ' is-locked' : ''}" data-act="pattern" data-slot="${slot}" data-val="${p.id}" aria-pressed="${(e.pattern || 'solid') === p.id}"
+      aria-label="${esc(p.name)}${locked ? `, locked, ${p.locked} stitches` : ''}" title="${esc(p.name)}${locked ? ` · ${p.locked} stitches` : ''}">${TT.svg(inner, '0 0 40 40')}${locked ? '<i class="sw-lock">🔒</i>' : ''}</button>`;
+  }
+  function section(slot) {
+    if (slot === 'mood') {
+      return `<div class="section"><div class="section-head"><h2>Moods<span class="count">tap for a whole face</span></h2></div>
+        <div class="moods">${TT.MOODS.map(m => {
+          const s2 = clone(state); s2.eyes.id = m.eyes; s2.mouth.id = m.mouth; s2.blush.id = m.blush;
+          return `<button class="item mood" data-act="mood" data-val="${m.id}">${TT.thumb('blush', m.blush ? TT.itemOf('blush', m.blush) : TT.BLUSH[0], s2).replace('106 128 188 106', '106 126 188 110')}<span>${m.name}</span></button>`;
+        }).join('')}</div></div>`;
+    }
+    const S = TT.SLOTS[slot], e = state[slot];
+    const cur = e.id ? TT.itemOf(slot, e.id) : null;
+    const extra = slot === 'scene' ? ' scene-item' : slot === 'fx' ? ' fx-item' : slot === 'pose' ? ' pose-item' : '';
+    let items = S.none ? itemButton(slot, null) : '';
+    items += S.items.map(it => itemButton(slot, it, extra)).join('');
+    const fixed = cur && cur.fixed;
+    let rows = '';
+    if (S.palette) {
+      rows += `<div class="row-label">${S.paletteLabel || 'Main color'}${fixed ? '<em>· this one comes in its own colors</em>' : ''}</div>
+        <div class="swatches${fixed ? ' dim' : ''}">${S.palette.map(p => swatch(slot, 'color', p)).join('')}${mixer(slot, 'color')}</div>`;
+    }
+    if (S.trim) {
+      rows += `<div class="row-label">Trim color<em>· collars, cuffs, bows and fabric accents</em></div>
+        <div class="swatches${fixed ? ' dim' : ''}"><button class="swatch auto" data-act="color2" data-slot="${slot}" data-val="" aria-pressed="${!e.color2}" aria-label="Automatic trim" title="Automatic">Auto</button>${S.palette.map(p => swatch(slot, 'color2', p)).join('')}${mixer(slot, 'color2')}</div>`;
+    }
+    if (S.patterns) {
+      const fabs = TT.allFabrics();
+      rows += `<div class="row-label">Fabric</div><div class="swatches${fixed ? ' dim' : ''}">${TT.PATTERNS.map(p => patternSwatch(slot, p)).join('')}
+        ${fabs.map(f => patternSwatch(slot, f)).join('')}
+        <button class="swatch design" data-act="designfabric" data-slot="${slot}" title="Design your own fabric" aria-label="Design your own fabric">✎</button></div>`;
+    }
+    const locked = locks.has(slot);
+    const favOn = cur && TT.isFav(slot, cur.id);
+    return `<div class="section">
+      <div class="section-head"><h2>${S.label}<span class="count">${S.items.length} to pick</span></h2>
+        <div class="head-btns">${cur ? `<button class="lock" data-act="fav" data-slot="${slot}" aria-pressed="${!!favOn}" title="Add ${esc(cur.name)} to Faves">${favOn ? '★' : '☆'} Fave</button>` : ''}
+        ${slot !== 'pose' ? `<button class="lock" data-act="lock" data-slot="${slot}" aria-pressed="${locked}" title="Keep this when you tap Surprise me">${locked ? LOCK_SVG : UNLOCK_SVG}${locked ? 'Locked' : 'Lock'}</button>` : ''}</div></div>
+      <div class="items">${items}</div>${rows}</div>`;
+  }
+  function searchResults() {
+    const q = query.trim().toLowerCase();
+    const groups = [];
+    for (const [slot, S] of Object.entries(TT.SLOTS)) {
+      const hits = S.items.filter(it => it.name.toLowerCase().includes(q) || (((TT.TAGS[slot] || {})[it.id] || '').includes(q)));
+      if (hits.length) groups.push(`<div class="section"><div class="section-head"><h2>${S.label}</h2></div><div class="items">${hits.map(it => itemButton(slot, it, slot === 'scene' ? ' scene-item' : '')).join('')}</div></div>`);
+    }
+    return groups.join('') || `<div class="empty">Nothing called “${esc(query)}” yet. Try “crown”, “beach” or “cozy”.</div>`;
+  }
+  function favesSection() {
+    const bySlot = {};
+    PR.favs.forEach(k => { const [slot, id] = k.split(':'); const it = TT.SLOTS[slot] && TT.itemOf(slot, id); if (it) (bySlot[slot] = bySlot[slot] || []).push(it); });
+    const keys = Object.keys(bySlot);
+    if (!keys.length) return `<div class="empty">No faves yet. Pick something you love, then tap <b>☆ Fave</b> next to the drawer's title.</div>`;
+    return keys.map(slot => `<div class="section"><div class="section-head"><h2>${TT.SLOTS[slot].label}</h2></div><div class="items">${bySlot[slot].map(it => itemButton(slot, it)).join('')}</div></div>`).join('');
   }
   function renderDrawer() {
     const tab = TABS.find(t => t.id === activeTab);
-    const html = tab.slots.map(slot => {
-      const S = TT.SLOTS[slot], e = state[slot];
-      const cur = e.id ? TT.itemOf(slot, e.id) : null;
-      const extra = slot === 'scene' ? ' scene-item' : slot === 'fx' ? ' fx-item' : '';
-      let items = '';
-      if (S.none) items += `<button class="item" data-act="item" data-slot="${slot}" data-val="" aria-pressed="${!e.id}">${TT.thumb(slot, null, state)}<span>None</span></button>`;
-      items += S.items.map(it => `<button class="item${extra}" data-act="item" data-slot="${slot}" data-val="${it.id}" aria-pressed="${e.id === it.id}">${TT.thumb(slot, it, state)}<span>${it.name}</span></button>`).join('');
-      let colors = '';
-      if (S.palette) {
-        const fixed = cur && cur.fixed;
-        const label = S.paletteLabel || 'Color';
-        colors = `<div class="row-label">${label}${fixed ? '<em>· this one comes in its own colors</em>' : ''}</div>
-          <div class="swatches${fixed ? ' dim' : ''}">${S.palette.map(p => swatchFor(slot, p, e)).join('')}</div>`;
-      }
-      let pats = '';
-      if (S.patterns) {
-        const fixed = cur && cur.fixed;
-        pats = `<div class="row-label">Fabric</div><div class="swatches${fixed ? ' dim' : ''}">${TT.PATTERNS.map(p => patternSwatch(slot, p, e)).join('')}</div>`;
-      }
-      const locked = locks.has(slot);
-      const count = S.items.length;
-      return `<div class="section">
-        <div class="section-head"><h2>${S.label}<span class="count">${count} to pick</span></h2>
-          <button class="lock" data-act="lock" data-slot="${slot}" aria-pressed="${locked}" title="Keep this when you tap Surprise me">${locked ? LOCK_SVG : UNLOCK_SVG}${locked ? 'Locked' : 'Lock'}</button></div>
-        <div class="items">${items}</div>${colors}${pats}</div>`;
-    }).join('');
-    $('#drawer').innerHTML = html;
+    let html = '';
+    if (query.trim()) html = searchResults();
+    else if (tab.id === 'faves') html = favesSection();
+    else html = tab.slots.map(section).join('');
+    $('#drawerBody').innerHTML = html;
     $('#drawer').setAttribute('aria-labelledby', 'tab-' + activeTab);
   }
 
   /* ---------------- stage ---------------- */
   function renderStage(pop) {
-    $('#stage').innerHTML = TT.compose(state, { pfx: 'st-' });
+    const look = Object.assign({}, state);
+    $('#stage').innerHTML = TT.compose(look, { pfx: 'st-', pose: dancePose || undefined });
     if (pop) {
       const g = $('#st-critter');
       if (g) { g.classList.add('pop'); setTimeout(() => g.classList.remove('pop'), 520); }
     }
-    $('#name').value = state.name || '';
+    if (document.activeElement !== $('#name')) $('#name').value = state.name || '';
     $('#undo').disabled = hIndex <= 0;
     $('#redo').disabled = hIndex >= history.length - 1;
     store.set('tinytailors.current', state);
   }
   function commit(opts = {}) {
     const snap = JSON.stringify(state);
-    if (snap === history[hIndex]) return;
+    if (snap === history[hIndex]) { if (opts.force) { renderStage(opts.pop !== false); renderDrawer(); } return; }
     history.splice(hIndex + 1);
     history.push(snap);
     if (history.length > 80) history.shift();
@@ -147,133 +221,322 @@
     if (opts.drawer !== false) renderDrawer();
     if (opts.tabs) renderTabs();
   }
+  function renderWallet(bump) {
+    $('#stitchCount').textContent = PR.stitches;
+    if (bump) { const w = $('#wallet'); w.classList.remove('bump'); void w.offsetWidth; w.classList.add('bump'); Sound.coin(); }
+  }
 
-  /* ---------------- random looks ---------------- */
+  /* ---------------- random looks (only things you own) ---------------- */
   const pick = arr => arr[Math.floor(Math.random() * arr.length)];
   const chance = p => Math.random() < p;
   const ODDS = { hair: 0.45, top: 0.95, bottom: 0.9, shoes: 0.85, hat: 0.6, face: 0.3, neck: 0.4, back: 0.3, hold: 0.55, pet: 0.6, fx: 0.6, blush: 0.85 };
+  const owned = (slot, list) => list.filter(it => !lockedItem(slot, it));
   function randomLook(base, respectLocks = true) {
     const s = clone(base);
-    const story = [pick(TT.COLORS), pick(TT.COLORS), pick(TT.COLORS)].map(c => c.id); // a little colour story
+    const colors = TT.COLORS.filter(c => !TT.isLocked('color', c));
+    const story = [pick(colors), pick(colors), pick(colors)].map(c => c.id);
+    const pats = TT.PATTERNS.slice(1).filter(p => !TT.isLocked('pattern', p));
     for (const [slot, S] of Object.entries(TT.SLOTS)) {
+      if (slot === 'pose') continue;
       if (respectLocks && locks.has(slot)) continue;
-      const e = s[slot];
-      e.id = (S.none && !chance(ODDS[slot] ?? 0.7)) ? null : pick(S.items).id;
-      if (slot === 'animal') e.color = chance(0.65) ? 'natural' : pick(TT.FUR).id;
-      else if (S.palette) e.color = chance(0.7) ? pick(story) : pick(S.palette).id;
-      if (S.patterns) e.pattern = chance(0.4) ? pick(TT.PATTERNS.slice(1)).id : 'solid';
+      const e = s[slot] || (s[slot] = {});
+      e.id = (S.none && !chance(ODDS[slot] ?? 0.7)) ? null : pick(owned(slot, S.items)).id;
+      if (slot === 'animal') e.color = chance(0.65) ? 'natural' : pick(TT.FUR.filter(f => !TT.isLocked('fur', f))).id;
+      else if (S.palette) e.color = chance(0.7) ? pick(story) : pick(colors).id;
+      if (S.trim) e.color2 = chance(0.3) ? pick(story) : null;
+      if (S.patterns) e.pattern = chance(0.4) ? pick(pats).id : 'solid';
     }
-    // keep dresses & gowns from clashing with big skirts most of the time
-    const longTop = ['gown', 'sundress', 'wizard'].includes(s.top.id);
+    const longTop = ['gown', 'sundress', 'wizard', 'starlight', 'royalrobe'].includes(s.top.id);
     if (longTop && !(respectLocks && locks.has('bottom')) && chance(0.7)) s.bottom.id = chance(0.5) ? null : 'leggings';
     if (s.bottom.id === 'mermaid' && !(respectLocks && locks.has('shoes'))) s.shoes.id = null;
+    s.pose = { id: pick(owned('pose', TT.POSES)).id };
+    s.petPos = null;
     return s;
   }
 
-  /* ---------------- names & challenges ---------------- */
+  /* ---------------- names ---------------- */
   const NAME_A = ['Sir', 'Lady', 'Captain', 'Princess', 'Professor', 'Little', 'Duke', 'Miss', 'Mister', 'Dr.', 'Baby', 'Count', 'Queen', 'King', ''];
   const NAME_B = ['Muffin', 'Pickles', 'Waffles', 'Noodle', 'Bean', 'Sprinkles', 'Biscuit', 'Mochi', 'Pudding', 'Clover', 'Pumpkin', 'Button', 'Nugget', 'Marshmallow', 'Taco', 'Cupcake', 'Bubbles', 'Peaches', 'Toffee', 'Dumpling', 'Pebble', 'Maple', 'Jellybean', 'Bao', 'Poppy', 'Fig', 'Gizmo', 'Tofu'];
   const NAME_C = ['', '', '', 'the Brave', 'McFluff', 'von Snuggles', 'the Great', 'Sparklepaws', 'the Third', 'Fuzzbottom'];
   const randomName = () => [pick(NAME_A), pick(NAME_B), pick(NAME_C)].filter(Boolean).join(' ').slice(0, 24);
-  const CHALLENGES = [
-    'Get ready for a royal tea party', 'Pack for a sunny beach day', 'Blast off as a space explorer', 'Throw the coziest pajama party',
-    'Spooky... but make it cute', 'Rainbow everything!', 'Wear one color from head to toe', 'Mix three different patterns',
-    'Superhero to the rescue', 'Dress up for a fancy dinner', 'Become a garden fairy', 'Sail the seas as a pirate captain',
-    'Snow day adventure', 'Rock star on the big stage', 'Head chef in a busy kitchen', 'Ballet recital tonight',
-    'First day at wizard school', 'Under the sea explorer', 'Birthday party guest of honor', 'Sleepy bedtime story',
-    'Big game day!', 'Picnic under the cherry blossoms', 'Knight guarding the castle', 'Autumn walk in the park',
-    'Match your pet pal', 'Dress the opposite of your critter', 'Only pastel pinks and purples', 'Ready for a camping trip',
-    'Fashion week runway look', 'Busy bee in the meadow'
-  ];
-  const CHEERS = ['Fabulous!', 'Runway ready!', 'So stylish!', 'Total icon!', 'Picture perfect!', 'Stitch-tastic!', 'Ten out of ten!', 'Cutest look ever!'];
 
-  /* ---------------- toast & confetti ---------------- */
+  /* ---------------- toast & celebrations ---------------- */
   let toastTimer;
   function toast(msg) {
     const t = $('#toast'); t.textContent = msg; t.classList.add('show');
-    clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 1600);
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 1900);
   }
   function celebrate(fxId = 'confetti') {
     const keep = state.fx.id;
     state.fx.id = fxId; renderStage(true); state.fx.id = keep;
     setTimeout(() => renderStage(false), 3200);
   }
-
-  /* ---------------- closet ---------------- */
-  const closetKey = 'tinytailors.closet';
-  let closet = store.get(closetKey, []).map(sanitize).slice(0, 24);
-  function renderCloset() {
-    $('#closetCount').textContent = closet.length;
-    const g = $('#closetGrid');
-    if (!closet.length) { g.innerHTML = '<div class="empty">No saved looks yet. Tap “Save look” to hang one up here.</div>'; return; }
-    g.innerHTML = closet.map((s, i) => `<div class="look"><button class="look-open" data-i="${i}" style="all:unset;cursor:pointer;display:grid;gap:4px">${TT.svg(TT.compose(s, { pfx: `cl${i}-`, animated: false }), '0 0 400 460')}<span>${escapeHtml(s.name || 'No name yet')}</span></button>
-      <button class="del" data-del="${i}" aria-label="Remove ${escapeHtml(s.name || 'this look')}">✕</button></div>`).join('');
-  }
-  const escapeHtml = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-
-  /* ---------------- photo ---------------- */
-  async function snapPhoto() {
-    Sound.shutter();
-    const flash = $('#stageCard'); flash.animate([{ filter: 'brightness(1.8)' }, { filter: 'none' }], { duration: 350 });
-    const W = 880, H = 1120;
-    const cvs = document.createElement('canvas'); cvs.width = W; cvs.height = H;
-    const g = cvs.getContext('2d');
-    const svg = TT.svg(TT.compose(state, { pfx: 'ph-', animated: false }), '0 0 400 460', 'width="800" height="920"');
-    const img = new Image();
-    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
-    try { await img.decode(); } catch (e) { await new Promise(r => { img.onload = r; img.onerror = r; }); }
-    try { await document.fonts.load('800 48px Sniglet'); await document.fonts.load('700 24px "Baloo 2"'); } catch (e) { }
-    // photo card
-    g.fillStyle = '#fffdf9'; roundRect(g, 0, 0, W, H, 48); g.fill();
-    g.lineWidth = 6; g.strokeStyle = '#5b3f58'; roundRect(g, 3, 3, W - 6, H - 6, 46); g.stroke();
-    g.save(); roundRect(g, 40, 40, 800, 920, 30); g.clip(); g.drawImage(img, 40, 40, 800, 920); g.restore();
-    g.lineWidth = 5; roundRect(g, 40, 40, 800, 920, 30); g.stroke();
-    g.setLineDash([12, 10]); g.strokeStyle = '#f4b3c8'; g.lineWidth = 4; roundRect(g, 18, 18, W - 36, H - 36, 36); g.stroke(); g.setLineDash([]);
-    g.textAlign = 'center';
-    g.fillStyle = '#e64f7c'; g.font = '800 54px Sniglet, "Baloo 2", sans-serif';
-    g.fillText(state.name || 'My critter', W / 2, 1036);
-    g.fillStyle = '#8a6f88'; g.font = '700 26px "Baloo 2", sans-serif';
-    g.fillText('Tailored at Tiny Tailors', W / 2, 1080);
-    let url;
-    try { url = cvs.toDataURL('image/png'); } catch (e) { url = img.src; }
-    $('#photoImg').src = url;
-    const a = $('#photoDownload');
-    if (a) { a.href = url; a.download = `${(state.name || 'tiny-tailors').replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.png`; }
-    openModal('#photoModal');
-  }
-  function roundRect(g, x, y, w, h, r) {
-    g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath();
-  }
+  function reward(n, why) { if (n > 0) { renderWallet(true); toast(`+${n} stitches · ${why}`); } }
 
   /* ---------------- modals ---------------- */
   let lastFocus = null;
   function openModal(sel) { lastFocus = document.activeElement; const m = $(sel); m.hidden = false; const b = m.querySelector('[data-close]'); b && b.focus(); }
   function closeModal(m) { m.hidden = true; lastFocus && lastFocus.focus && lastFocus.focus(); }
+  function sheet(title, html, cls = '') {
+    $('#sheetTitle').textContent = title;
+    $('#sheetBody').innerHTML = html;
+    $('#sheet').querySelector('.modal-card').className = 'modal-card ' + cls;
+    openModal('#sheet');
+  }
+
+  /* ---------------- unlocking ---------------- */
+  let pendingUnlock = null;
+  function askUnlock(kind, obj, apply, preview) {
+    pendingUnlock = { kind, obj, apply };
+    const can = PR.stitches >= obj.locked;
+    sheet('Unlock it?', `<div class="unlock">
+      <div class="unlock-art">${preview || ''}</div>
+      <div><p class="unlock-name">${esc(obj.name)}</p>
+      <p class="unlock-price">${priceTag(obj.locked)} <span>You have ${PR.stitches}</span></p>
+      ${can ? `<button class="btn-big" type="button" data-unlock>Unlock for ${obj.locked} stitches</button>`
+        : `<p class="modal-sub">You need ${obj.locked - PR.stitches} more stitches. Earn them with style challenges (the daily one pays double!), fashion shows and photos.</p><button class="btn-soft" type="button" data-gochallenge>Do a challenge</button>`}
+      </div></div>`, 'unlock-card');
+  }
+  function doUnlock() {
+    if (!pendingUnlock) return;
+    const { kind, obj, apply } = pendingUnlock;
+    if (TT.unlock(kind, obj)) {
+      closeModal($('#sheet'));
+      renderWallet(); Sound.sparkle(); toast(`Unlocked ${obj.name}!`);
+      apply(); celebrate('glitter');
+    }
+    pendingUnlock = null;
+  }
+
+  /* ---------------- challenges ---------------- */
+  function setChallenge(ch, daily) {
+    challenge = { ch, daily };
+    $('#challengeText').textContent = ch.text;
+    $('#challengeLabel').innerHTML = daily ? `Daily challenge${PR.streak ? ` · <span class="streak">🔥 ${PR.streak}-day streak</span>` : ''}${TT.dailyDone() ? ' · done today ✓' : ''}` : 'Style challenge';
+    $('#challenge').hidden = false;
+    $('#challenge').classList.toggle('daily', !!daily);
+  }
+  function openChallengePicker() {
+    const d = TT.dailyChallenge();
+    sheet('Style challenges', `<button class="daily-card" type="button" data-pickdaily>
+        <span class="daily-tag">Today's daily challenge · pays double</span>
+        <strong>${esc(d.text)}</strong>
+        <span>${TT.dailyDone() ? 'Done today ✓ (you can still improve your score)' : `Keep your streak going${PR.streak ? `: 🔥 ${PR.streak} days` : '!'}`}</span></button>
+      <div class="row-label">Or pick any challenge</div>
+      <div class="ch-list">${TT.CHALLENGES.map(c => `<button class="mini ch-pick" type="button" data-pick="${c.id}">${esc(c.text)}</button>`).join('')}</div>
+      <button class="btn-soft" type="button" data-pickrandom>Surprise challenge</button>`, 'wide-card');
+  }
+  function judgeNow() {
+    if (!challenge) return;
+    const res = TT.judge(state, challenge.ch);
+    const rw = TT.rewardChallenge(challenge.ch.id, res.stars, challenge.daily);
+    const words = ['', 'Good start!', 'Getting there!', 'Stylish!', 'Fabulous!', 'Perfect match!'][res.stars];
+    sheet('The judge says…', `<div class="score">
+      <div class="stars" aria-label="${res.stars} out of 5 stars">${'★'.repeat(res.stars)}<span>${'★'.repeat(5 - res.stars)}</span></div>
+      <p class="score-word">${words} <b>${res.score}</b>/100</p>
+      <p class="score-ch">${esc(challenge.ch.text)}</p>
+      <ul class="score-lines">${res.lines.map(l => `<li class="${l.good ? 'ok' : 'tip'}"><span>${l.good ? '✓' : '✎'}</span><div>${esc(l.msg)}</div><b>${l.pts}/${l.w}</b></li>`).join('')}</ul>
+      <p class="score-earn">${rw.earned ? `${SPOOL} +${rw.earned} stitches` : 'Beat your best score today to earn more stitches.'}${rw.streakUp ? ` · 🔥 ${rw.streak}-day streak!` : ''}</p>
+      <div class="score-actions"><button class="btn-soft" type="button" data-close>Keep styling</button><button class="btn-big" type="button" data-newch>New challenge</button></div></div>`, 'score-card');
+    if (res.stars >= 4) { Sound.cheer(); celebrate('confetti'); } else Sound.sparkle();
+    if (rw.earned) renderWallet(true);
+    if (challenge.daily) setChallenge(challenge.ch, true);
+  }
+
+  /* ---------------- closet, shows & group photos ---------------- */
+  const closetKey = 'tinytailors.closet';
+  let closet = store.get(closetKey, []).map(sanitize).slice(0, 30);
+  let closetMode = null; // null | 'show' | 'group'
+  let picked = [];
+  function renderCloset() {
+    $('#closetCount').textContent = closet.length;
+    const g = $('#closetGrid');
+    const bar = $('#closetBar');
+    if (closetMode) {
+      const [min, max] = closetMode === 'show' ? [2, 5] : [2, 4];
+      bar.innerHTML = `<span>${closetMode === 'show' ? 'Pick 2 to 5 models for the runway' : 'Pick 2 to 4 friends for the photo'} · ${picked.length} picked</span>
+        <button class="btn-big" type="button" data-start ${picked.length < min || picked.length > max ? 'disabled' : ''}>${closetMode === 'show' ? 'Start the show!' : 'Take the photo'}</button>
+        <button class="mini ghost" type="button" data-cancel>Cancel</button>`;
+    } else {
+      bar.innerHTML = `<button class="btn-soft" type="button" data-mode="show">${TT.svg(TT.star(12, 12, 10, '#ffe17a', 1.6), '0 0 24 24')}Fashion show</button>
+        <button class="btn-soft" type="button" data-mode="group">${TT.svg('<path d="M4 8h3l2-3h6l2 3h3v11H4z" fill="none" stroke="#5b3f58" stroke-width="2"/><circle cx="12" cy="13" r="3.5" fill="none" stroke="#5b3f58" stroke-width="2"/>', '0 0 24 24')}Group photo</button>`;
+    }
+    if (!closet.length) { g.innerHTML = '<div class="empty">No saved looks yet. Tap “Save look” to hang one up here.</div>'; return; }
+    g.innerHTML = closet.map((s, i) => {
+      const n = picked.indexOf(i);
+      return `<div class="look${n >= 0 ? ' picked' : ''}"><button class="look-open" data-i="${i}" type="button" aria-label="${closetMode ? 'Pick' : 'Wear'} ${esc(s.name || 'this look')}">${TT.svg(TT.compose(s, { pfx: `cl${i}-`, animated: false }), '0 0 400 460')}<span>${esc(s.name || 'No name yet')}</span></button>
+      ${closetMode ? (n >= 0 ? `<i class="pick-num">${n + 1}</i>` : '') : `<button class="del" data-del="${i}" type="button" aria-label="Remove ${esc(s.name || 'this look')}">✕</button>`}</div>`;
+    }).join('');
+  }
+  function startCloset() {
+    const looks = picked.map(i => closet[i]);
+    const mode = closetMode;
+    closetMode = null; picked = [];
+    closeModal($('#closet'));
+    if (mode === 'show') {
+      TT.runFashionShow(looks, { onEnd: n => { if (n) renderWallet(true); } });
+    } else {
+      const inner = TT.groupPhotoSVG(looks, looks[0].scene.id);
+      photoFrom(inner, 600, 460, looks.map(l => l.name || 'Pal').join(' & ').slice(0, 40), 'group');
+    }
+  }
+
+  /* ---------------- photos ---------------- */
+  async function photoFrom(inner, vw, vh, caption, kind) {
+    Sound.shutter();
+    $('#stageCard').animate([{ filter: 'brightness(1.8)' }, { filter: 'none' }], { duration: 350 });
+    const scale = 2, pad = 40, W = vw * scale + pad * 2, H = vh * scale + pad * 2 + 160;
+    const cvs = document.createElement('canvas'); cvs.width = W; cvs.height = H;
+    const g = cvs.getContext('2d');
+    const svg = TT.svg(inner, `0 0 ${vw} ${vh}`, `width="${vw * scale}" height="${vh * scale}"`);
+    const img = new Image();
+    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    try { await img.decode(); } catch (e) { await new Promise(r => { img.onload = r; img.onerror = r; }); }
+    try { await document.fonts.load('800 48px Sniglet'); await document.fonts.load('700 24px "Baloo 2"'); } catch (e) { }
+    g.fillStyle = '#fffdf9'; roundRect(g, 0, 0, W, H, 48); g.fill();
+    g.lineWidth = 6; g.strokeStyle = '#5b3f58'; roundRect(g, 3, 3, W - 6, H - 6, 46); g.stroke();
+    g.save(); roundRect(g, pad, pad, vw * scale, vh * scale, 30); g.clip(); g.drawImage(img, pad, pad, vw * scale, vh * scale); g.restore();
+    g.lineWidth = 5; roundRect(g, pad, pad, vw * scale, vh * scale, 30); g.stroke();
+    g.setLineDash([12, 10]); g.strokeStyle = '#f4b3c8'; g.lineWidth = 4; roundRect(g, 18, 18, W - 36, H - 36, 36); g.stroke(); g.setLineDash([]);
+    g.textAlign = 'center';
+    g.fillStyle = '#e64f7c'; g.font = '800 52px Sniglet, "Baloo 2", sans-serif';
+    g.fillText(caption || 'My critter', W / 2, H - 92);
+    g.fillStyle = '#8a6f88'; g.font = '700 26px "Baloo 2", sans-serif';
+    g.fillText('Tailored at Tiny Tailors', W / 2, H - 50);
+    let url;
+    try { url = cvs.toDataURL('image/png'); } catch (e) { url = img.src; }
+    $('#photoImg').src = url;
+    const a = $('#photoDownload');
+    if (a) { a.href = url; a.download = `${(caption || 'tiny-tailors').replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.png`; }
+    openModal('#photoModal');
+    reward(TT.dailyBonus(kind === 'group' ? 'group' : 'photo', 3), kind === 'group' ? 'first group photo today' : 'first photo today');
+  }
+  function roundRect(g, x, y, w, h, r) {
+    g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath();
+  }
+
+  /* ---------------- dance ---------------- */
+  function dance() {
+    if (danceTimer) return stopDance();
+    Sound.startMusic();
+    $('#dance').classList.add('on'); $('#dance').querySelector('.txt').textContent = 'Stop';
+    let i = 0, beats = 0;
+    const step = () => {
+      dancePose = TT.itemOf('pose', TT.DANCE[i % TT.DANCE.length]);
+      renderStage(true); i++; beats++;
+      if (beats > 16) stopDance();
+    };
+    step();
+    danceTimer = setInterval(step, 520);
+  }
+  function stopDance() {
+    clearInterval(danceTimer); danceTimer = null; dancePose = null; Sound.stopMusic();
+    $('#dance').classList.remove('on'); $('#dance').querySelector('.txt').textContent = 'Dance!';
+    renderStage(false);
+  }
+
+  /* ---------------- pet dragging ---------------- */
+  function bindPetDrag() {
+    const svg = $('#stage');
+    let drag = null;
+    const toSvg = (e) => { const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY; return pt.matrixTransform(svg.getScreenCTM().inverse()); };
+    svg.addEventListener('pointerdown', e => {
+      const petG = e.target.closest && e.target.closest('#st-pet');
+      if (!petG) return;
+      e.preventDefault();
+      const p = toSvg(e);
+      const start = state.petPos || { x: 0, y: 0 };
+      drag = { p, start, g: petG, moved: false };
+      svg.setPointerCapture(e.pointerId);
+      petG.classList.add('dragging');
+    });
+    svg.addEventListener('pointermove', e => {
+      if (!drag) return;
+      const p = toSvg(e);
+      const x = Math.max(-50, Math.min(300, drag.start.x + p.x - drag.p.x));
+      const y = Math.max(-380, Math.min(20, drag.start.y + p.y - drag.p.y));
+      drag.cur = { x: Math.round(x), y: Math.round(y) }; drag.moved = true;
+      drag.g.setAttribute('transform', `translate(${drag.cur.x} ${drag.cur.y})`);
+    });
+    const end = () => {
+      if (!drag) return;
+      if (drag.moved && drag.cur) { state.petPos = drag.cur; Sound.pop(); commit({ drawer: false, pop: false }); }
+      drag = null;
+    };
+    svg.addEventListener('pointerup', end); svg.addEventListener('pointercancel', end);
+  }
+
+  /* ---------------- share ---------------- */
+  function shareLink(code) { return location.origin && location.origin !== 'null' ? `${location.origin}${location.pathname}#look=${code}` : ''; }
+  function openShare() {
+    const code = TT.encodeLook(state);
+    const link = shareLink(code);
+    sheet('Share your look', `<p class="modal-sub">Send this code to a friend. They tap <b>Menu → Share &amp; codes</b> in Tiny Tailors and paste it in.</p>
+      <div class="code-box"><code id="shareCode">${esc(code)}</code><button class="mini" type="button" data-copy="${esc(code)}">Copy code</button></div>
+      ${link && /^https?:/.test(link) ? `<div class="code-box"><code class="link">${esc(link)}</code><button class="mini" type="button" data-copy="${esc(link)}">Copy link</button></div>` : ''}
+      <div class="row-label">Got a code from a friend?</div>
+      <form class="code-in" id="codeForm"><input id="codeInput" class="text-in" placeholder="Paste a TT1- code" autocomplete="off" aria-label="Look code"><button class="btn-big" type="submit">Try it on</button></form>
+      <p class="code-err" id="codeErr" role="alert"></p>`, 'wide-card');
+    reward(TT.dailyBonus('share', 2), 'sharing a look');
+  }
+  function loadCode(text) {
+    const st = TT.decodeLook(text);
+    // keep any fabric that came with the code
+    Object.values(TT.sharedFabrics).forEach(f => { if (f.id !== 'fab-preview' && !TT.allFabrics().some(x => x.id === f.id)) { PR.fabrics.push({ id: f.id, name: f.name, px: f.px }); } });
+    TT.saveProgress();
+    state = sanitize(Object.assign(clone(DEFAULT), st));
+    commit({ tabs: true, force: true });
+    toast(`Wearing ${state.name || 'a shared look'}!`);
+  }
+
+  /* ---------------- settings ---------------- */
+  function applySettings() {
+    const s = PR.settings;
+    Sound.on = s.sound;
+    document.body.classList.toggle('calm', !!s.calm);
+    document.body.classList.toggle('big', !!s.big);
+    $('#soundBtn').setAttribute('aria-pressed', s.sound);
+  }
+  function openSettings() {
+    const s = PR.settings;
+    const row = (k, label, sub) => `<label class="set-row"><input type="checkbox" data-set="${k}" ${s[k] ? 'checked' : ''}><span><b>${label}</b><em>${sub}</em></span></label>`;
+    const u = TT.countUnlockables();
+    sheet('Settings', row('sound', 'Sound effects', 'Pops, sparkles and music') + row('speak', 'Read names out loud', 'Says each item’s name when you tap it') +
+      row('calm', 'Calm mode', 'Turns off bouncing and falling effects') + row('big', 'Bigger buttons', 'Easier tapping for little fingers') +
+      `<p class="modal-sub">You've unlocked ${u.got} of ${u.total} special items.</p>`);
+  }
 
   /* ---------------- title screen ---------------- */
   function renderParade() {
-    const looks = [0, 1, 2].map(() => {
-      const s = randomLook(DEFAULT, false);
-      s.fx.id = null; s.scene.id = 'tailor'; s.pet.id = null;
-      return s;
-    });
+    const looks = [0, 1, 2].map(() => { const s = randomLook(DEFAULT, false); s.fx.id = null; s.pet.id = null; return s; });
     $('#parade').innerHTML = looks.map((s, i) => TT.svg(TT.compose(s, { pfx: `pa${i}-`, scene: false }), '40 0 320 440')).join('');
   }
   function startStudio() {
     Sound.wake(); Sound.whoosh();
     $('#title').hidden = true; $('#app').hidden = false;
-    renderTabs(); renderDrawer(); renderStage(true); renderCloset();
-    store.set('tinytailors.started', true);
+    renderTabs(); renderDrawer(); renderStage(true); renderCloset(); renderWallet();
+    if (!store.get('tinytailors.welcomed', false)) {
+      store.set('tinytailors.welcomed', true);
+      setTimeout(() => toast(`You have ${PR.stitches} stitches to spend on 🔒 goodies!`), 900);
+    }
   }
 
   /* ---------------- events ---------------- */
+  function applyItem(slot, val) {
+    if (slot === 'pose') { state.pose = { id: val }; }
+    else state[slot].id = val || null;
+    const it = val ? TT.itemOf(slot, val) : null;
+    if (PR.settings.speak) Sound.say(it ? it.name : 'none');
+    Sound.pop(); commit({ tabs: slot === 'animal' });
+  }
   function bind() {
     $('#play').addEventListener('click', startStudio);
-    $('#home').addEventListener('click', () => { $('#app').hidden = true; $('#title').hidden = false; renderParade(); });
+    $('#home').addEventListener('click', () => { stopDance(); $('#app').hidden = true; $('#title').hidden = false; renderParade(); });
 
     $('#tabs').addEventListener('click', e => {
       const b = e.target.closest('[data-tab]'); if (!b) return;
       activeTab = b.dataset.tab; store.set('tinytailors.tab', activeTab); Sound.tap();
+      query = ''; $('#search').value = '';
       $('#tabs').querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', t.dataset.tab === activeTab));
       renderDrawer(); $('#drawer').scrollTop = 0;
     });
@@ -282,31 +545,63 @@
       const i = TABS.findIndex(t => t.id === activeTab), n = (i + (e.key === 'ArrowRight' ? 1 : -1) + TABS.length) % TABS.length;
       $('#tab-' + TABS[n].id).click(); $('#tab-' + TABS[n].id).focus();
     });
+    $('#search').addEventListener('input', e => { query = e.target.value; renderDrawer(); });
 
-    $('#drawer').addEventListener('click', e => {
-      const b = e.target.closest('[data-act]'); if (!b) return;
+    $('#drawerBody').addEventListener('click', e => {
+      const b = e.target.closest('[data-act]'); if (!b || b.tagName === 'INPUT') return;
       const { act, slot, val } = b.dataset;
       if (act === 'item') {
-        state[slot].id = val || null;
-        if (slot === 'bottom' && val === 'mermaid') { /* mermaids skip shoes */ }
-        Sound.pop(); commit({ tabs: slot === 'animal' });
-      } else if (act === 'color') {
-        state[slot].color = val; Sound.swatch(); commit({ tabs: false });
+        const it = val ? TT.itemOf(slot, val) : null;
+        if (it && lockedItem(slot, it)) return askUnlock(kindOf(slot), it, () => applyItem(slot, val), TT.thumb(slot, it, state));
+        applyItem(slot, val);
+      } else if (act === 'mood') {
+        const m = TT.MOODS.find(x => x.id === val);
+        state.eyes.id = m.eyes; state.mouth.id = m.mouth; state.blush.id = m.blush;
+        if (PR.settings.speak) Sound.say(m.name);
+        Sound.pop(); commit();
+      } else if (act === 'color' || act === 'color2') {
+        const pal = TT.SLOTS[slot].palette;
+        const p = pal.find(x => x.id === val);
+        const kind = slot === 'animal' ? 'fur' : 'color';
+        const apply = () => { state[slot][act] = val || null; Sound.swatch(); commit({ tabs: false }); };
+        if (p && p.locked && TT.isLocked(kind, p)) return askUnlock(kind, p, apply, `<div class="big-swatch" style="background:${p.hex}"></div>`);
+        apply();
       } else if (act === 'pattern') {
-        state[slot].pattern = val; Sound.swatch(); commit();
+        const p = TT.PATTERNS.find(x => x.id === val);
+        const apply = () => { state[slot].pattern = val; Sound.swatch(); commit(); };
+        if (p && p.locked && TT.isLocked('pattern', p)) {
+          const id = 'unl-pat'; const base = TT.colorHex(slot, state[slot].color);
+          return askUnlock('pattern', p, apply, TT.svg(`<defs>${TT.patternDef(id, p.id, base)}</defs><rect width="80" height="80" rx="16" fill="url(#${id})"/>`, '0 0 80 80'));
+        }
+        apply();
+      } else if (act === 'designfabric') {
+        TT.openFabricStudio({ onSave: id => { state[slot].pattern = id; }, onDone: () => { commit({ force: true }); } });
       } else if (act === 'lock') {
         locks.has(slot) ? locks.delete(slot) : locks.add(slot);
         store.set('tinytailors.locks', [...locks]); Sound.tap();
         renderDrawer(); renderTabs();
         toast(locks.has(slot) ? `${TT.SLOTS[slot].label} locked` : `${TT.SLOTS[slot].label} unlocked`);
+      } else if (act === 'fav') {
+        const on = TT.toggleFav(slot, state[slot].id); Sound.tap(); renderDrawer(); toast(on ? 'Added to Faves ★' : 'Removed from Faves');
       }
+    });
+    // colour mixer (native colour picker)
+    $('#drawerBody').addEventListener('input', e => {
+      const t = e.target; if (!t.matches('input[type=color]')) return;
+      state[t.dataset.slot][t.dataset.which] = t.value.toLowerCase();
+      renderStage(false);
+    });
+    $('#drawerBody').addEventListener('change', e => {
+      const t = e.target; if (!t.matches('input[type=color]')) return;
+      state[t.dataset.slot][t.dataset.which] = t.value.toLowerCase(); Sound.swatch(); commit();
     });
 
     $('#surprise').addEventListener('click', () => {
-      state = randomLook(state); Sound.sparkle();
+      stopDanceIf(); state = randomLook(state); Sound.sparkle();
       const btn = $('#surprise'); btn.classList.remove('spin'); void btn.offsetWidth; btn.classList.add('spin');
       commit({ tabs: true });
     });
+    $('#dance').addEventListener('click', dance);
     $('#undo').addEventListener('click', () => { if (hIndex > 0) { hIndex--; state = JSON.parse(history[hIndex]); Sound.undo(); renderStage(true); renderDrawer(); renderTabs(); } });
     $('#redo').addEventListener('click', () => { if (hIndex < history.length - 1) { hIndex++; state = JSON.parse(history[hIndex]); Sound.pop(); renderStage(true); renderDrawer(); renderTabs(); } });
 
@@ -314,28 +609,98 @@
     $('#name').addEventListener('change', () => commit({ pop: false, drawer: false }));
     $('#nameDice').addEventListener('click', () => { state.name = randomName(); Sound.pop(); commit({ drawer: false }); });
 
-    $('#soundBtn').addEventListener('click', e => {
-      Sound.on = !Sound.on; store.set('tinytailors.sound', Sound.on);
-      e.currentTarget.setAttribute('aria-pressed', Sound.on); e.currentTarget.setAttribute('aria-label', Sound.on ? 'Sound on' : 'Sound off');
-      if (Sound.on) { Sound.wake(); Sound.tap(); }
+    $('#soundBtn').addEventListener('click', () => {
+      PR.settings.sound = !PR.settings.sound; TT.saveProgress(); applySettings();
+      if (PR.settings.sound) { Sound.wake(); Sound.tap(); } else Sound.stopMusic();
+    });
+    $('#wallet').addEventListener('click', () => {
+      const u = TT.countUnlockables();
+      sheet('Your stitches', `<div class="wallet-big">${SPOOL}<b>${PR.stitches}</b></div>
+        <p class="modal-sub">Spend stitches on anything with a 🔒. You've unlocked ${u.got} of ${u.total}.</p>
+        <ul class="earn-list"><li><b>Daily challenge</b> 6 stitches a star, plus a streak bonus</li><li><b>Any challenge</b> 3 stitches a star (beat your best to earn more)</li>
+        <li><b>Fashion show</b> 8 stitches, twice a day</li><li><b>Photos</b> 3 for your first photo and 3 for your first group photo each day</li><li><b>Sharing a look</b> 2 a day</li></ul>
+        <button class="btn-big" type="button" data-gochallenge>Earn stitches now</button>`);
     });
 
-    $('#photo').addEventListener('click', snapPhoto);
+    $('#photo').addEventListener('click', () => photoFrom(TT.compose(state, { pfx: 'ph-', animated: false }), 400, 460, state.name || 'My critter', 'photo'));
     $('#save').addEventListener('click', () => {
-      closet.unshift(clone(state)); closet = closet.slice(0, 24);
+      closet.unshift(clone(state)); closet = closet.slice(0, 30);
       const ok = store.set(closetKey, closet);
       renderCloset(); Sound.sparkle(); toast(ok ? 'Hung up in your closet!' : 'Saved until you close this page');
+      reward(TT.dailyBonus('save', 2), 'first saved look today');
     });
-    $('#closetBtn').addEventListener('click', () => { renderCloset(); openModal('#closet'); });
-    $('#closetGrid').addEventListener('click', e => {
-      const del = e.target.closest('[data-del]');
+    $('#closetBtn').addEventListener('click', () => { closetMode = null; picked = []; renderCloset(); openModal('#closet'); });
+    $('#closet').addEventListener('click', e => {
+      const t = e.target;
+      const del = t.closest('[data-del]');
       if (del) { closet.splice(+del.dataset.del, 1); store.set(closetKey, closet); renderCloset(); Sound.undo(); return; }
-      const open = e.target.closest('.look-open');
-      if (open) { state = clone(closet[+open.dataset.i]); closeModal($('#closet')); Sound.whoosh(); commit({ tabs: true }); }
+      const mode = t.closest('[data-mode]'); if (mode) { closetMode = mode.dataset.mode; picked = []; renderCloset(); Sound.tap(); return; }
+      if (t.closest('[data-cancel]')) { closetMode = null; picked = []; renderCloset(); return; }
+      if (t.closest('[data-start]')) { startCloset(); return; }
+      const open = t.closest('.look-open');
+      if (open) {
+        const i = +open.dataset.i;
+        if (closetMode) { const k = picked.indexOf(i); k >= 0 ? picked.splice(k, 1) : picked.push(i); Sound.tap(); renderCloset(); return; }
+        state = clone(closet[i]); closeModal($('#closet')); Sound.whoosh(); commit({ tabs: true, force: true });
+      }
     });
+
+    // menu
+    $('#menuBtn').addEventListener('click', e => { e.stopPropagation(); const m = $('#menu'); m.hidden = !m.hidden; $('#menuBtn').setAttribute('aria-expanded', !m.hidden); });
+    document.addEventListener('click', e => { if (!e.target.closest('#menu') && !e.target.closest('#menuBtn')) { $('#menu').hidden = true; $('#menuBtn').setAttribute('aria-expanded', 'false'); } });
+    $('#menu').addEventListener('click', e => {
+      const b = e.target.closest('[data-menu]'); if (!b) return;
+      $('#menu').hidden = true;
+      const k = b.dataset.menu;
+      if (k === 'share') openShare();
+      if (k === 'fabric') TT.openFabricStudio({ onDone: () => renderDrawer() });
+      if (k === 'doll' || k === 'coloring') {
+        const ok = TT.printPaperDoll(state, k === 'coloring');
+        toast(ok ? 'Opening your printable sheet…' : 'Printing works on the published website');
+      }
+      if (k === 'settings') openSettings();
+      if (k === 'home') $('#home').click();
+    });
+
+    // shared sheet (unlock, challenges, share, settings)
+    $('#sheet').addEventListener('click', e => {
+      const t = e.target;
+      if (t === $('#sheet') || t.closest('[data-close]')) return closeModal($('#sheet'));
+      if (t.closest('[data-unlock]')) return doUnlock();
+      if (t.closest('[data-gochallenge]')) { closeModal($('#sheet')); return openChallengePicker(); }
+      if (t.closest('[data-pickdaily]')) { setChallenge(TT.dailyChallenge(), true); closeModal($('#sheet')); Sound.tap(); return; }
+      const pk = t.closest('[data-pick]'); if (pk) { setChallenge(TT.CHALLENGES.find(c => c.id === pk.dataset.pick), false); closeModal($('#sheet')); Sound.tap(); return; }
+      if (t.closest('[data-pickrandom]')) { setChallenge(pick(TT.CHALLENGES), false); closeModal($('#sheet')); Sound.tap(); return; }
+      if (t.closest('[data-newch]')) { closeModal($('#sheet')); return openChallengePicker(); }
+      const cp = t.closest('[data-copy]');
+      if (cp) {
+        const text = cp.dataset.copy;
+        const done = () => { cp.textContent = 'Copied!'; setTimeout(() => { cp.textContent = 'Copy'; }, 1400); };
+        try { navigator.clipboard.writeText(text).then(done, () => selectText(cp.previousElementSibling)); } catch (err) { selectText(cp.previousElementSibling); }
+      }
+    });
+    $('#sheet').addEventListener('change', e => {
+      const t = e.target; if (!t.matches('[data-set]')) return;
+      PR.settings[t.dataset.set] = t.checked; TT.saveProgress(); applySettings();
+      if (t.dataset.set === 'speak' && t.checked) Sound.say('Hello! I will read names out loud.');
+    });
+    $('#sheet').addEventListener('submit', e => {
+      if (e.target.id !== 'codeForm') return;
+      e.preventDefault();
+      try { loadCode($('#codeInput').value); closeModal($('#sheet')); Sound.whoosh(); }
+      catch (err) { $('#codeErr').textContent = err.message && err.message.length > 12 ? err.message : 'Hmm, that code didn’t work. Check that you copied all of it.'; Sound.undo(); }
+    });
+
+    $('#challengeBtn').addEventListener('click', openChallengePicker);
+    $('#challengeDone').addEventListener('click', judgeNow);
+    $('#challengeNew').addEventListener('click', openChallengePicker);
+    $('#challengeClose').addEventListener('click', () => { $('#challenge').hidden = true; challenge = null; });
+
     document.querySelectorAll('.modal').forEach(m => {
+      if (m.id === 'sheet' || m.id === 'closet') return;
       m.addEventListener('click', e => { if (e.target === m || e.target.closest('[data-close]')) closeModal(m); });
     });
+    $('#closet').addEventListener('click', e => { if (e.target === $('#closet') || e.target.closest('[data-close]')) closeModal($('#closet')); });
     document.addEventListener('keydown', e => {
       if (e.key === 'Escape') document.querySelectorAll('.modal:not([hidden])').forEach(closeModal);
       if (e.target.matches('input')) return;
@@ -343,24 +708,22 @@
       if (e.key === 'r' || e.key === 'R') $('#surprise').click();
       if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); (e.shiftKey ? $('#redo') : $('#undo')).click(); }
     });
-
-    // style challenge
-    const newChallenge = () => { $('#challengeText').textContent = pick(CHALLENGES); };
-    $('#challengeBtn').addEventListener('click', () => { newChallenge(); $('#challenge').hidden = false; Sound.tap(); });
-    $('#challengeNew').addEventListener('click', () => { newChallenge(); Sound.tap(); });
-    $('#challengeClose').addEventListener('click', () => { $('#challenge').hidden = true; });
-    $('#challengeDone').addEventListener('click', () => { Sound.cheer(); toast(pick(CHEERS) + ' ★★★★★'); celebrate('confetti'); setTimeout(newChallenge, 1600); });
+    bindPetDrag();
   }
+  function stopDanceIf() { if (danceTimer) stopDance(); }
+  function selectText(el) { if (!el) return; const r = document.createRange(); r.selectNodeContents(el); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }
 
   /* ---------------- boot ---------------- */
   function boot() {
-    Sound.on = store.get('tinytailors.sound', true);
-    $('#soundBtn').setAttribute('aria-pressed', Sound.on);
+    applySettings();
     $('#looksCount').textContent = TT.bigWords(TT.countLooks());
     renderParade();
     bind();
-    if (location.hash === '#studio') startStudio();
+    const m = location.hash.match(/#look=([A-Za-z0-9_\-]+)/);
+    if (m) {
+      try { startStudio(); loadCode('TT1-' + m[1].replace(/^TT1-/, '')); } catch (e) { }
+    } else if (location.hash === '#studio') startStudio();
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
-  TT.app = { get state() { return state; }, randomLook, sanitize };
+  TT.app = { get state() { return state; }, set state(v) { state = sanitize(v); commit({ force: true, tabs: true }); }, randomLook, sanitize, judgeNow, setChallenge };
 })(window.TT);

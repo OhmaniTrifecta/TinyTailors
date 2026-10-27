@@ -44,22 +44,34 @@
         <span class="brand-name">Tiny Tailors</span>
       </button>
       <div class="bar-actions">
+        <button class="chip wallet" id="wallet" type="button" aria-label="Your stitches"><span class="spool-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="4" rx="1.5" fill="#c99a6e" stroke="#5b3f58" stroke-width="1.6"/><rect x="5" y="17" width="14" height="4" rx="1.5" fill="#c99a6e" stroke="#5b3f58" stroke-width="1.6"/><rect x="7" y="7" width="10" height="10" fill="#ff6f96" stroke="#5b3f58" stroke-width="1.6"/></svg></span><b id="stitchCount">0</b></button>
         <button class="chip" id="undo" type="button" aria-label="Undo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7 4 12l5 5M4 12h10a6 6 0 0 1 0 12h-2" transform="translate(0 -3)"/></svg><span>Undo</span></button>
         <button class="chip" id="redo" type="button" aria-label="Redo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 7 5 5-5 5M20 12H10a6 6 0 0 0 0 12h2" transform="translate(0 -3)"/></svg><span>Redo</span></button>
         <button class="chip" id="challengeBtn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg><span>Challenge</span></button>
         <button class="chip" id="closetBtn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6a2 2 0 1 1 2 2c-1 0-2 .8-2 2l9 6c.8.6.4 2-.6 2H3.6c-1 0-1.4-1.4-.6-2l9-6"/></svg><span>Closet <b id="closetCount">0</b></span></button>
-        <button class="chip icon-only" id="soundBtn" type="button" aria-label="Sound on" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path class="wave" d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg></button>
+        <button class="chip icon-only" id="soundBtn" type="button" aria-label="Sound" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path class="wave" d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg></button>
+        <div class="menu-wrap">
+          <button class="chip icon-only" id="menuBtn" type="button" aria-label="More" aria-haspopup="true" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14"/></svg></button>
+          <div class="menu" id="menu" hidden role="menu">
+            <button type="button" role="menuitem" data-menu="share">Share &amp; codes</button>
+            <button type="button" role="menuitem" data-menu="fabric">Fabric studio</button>
+            <button type="button" role="menuitem" data-menu="doll">Print paper doll</button>
+            <button type="button" role="menuitem" data-menu="coloring">Print coloring page</button>
+            <button type="button" role="menuitem" data-menu="settings">Settings</button>
+            <button type="button" role="menuitem" data-menu="home">Title screen</button>
+          </div>
+        </div>
       </div>
     </header>
 
     <main class="studio">
       <section class="stage-wrap" aria-label="Your critter">
         <div id="challenge" class="challenge" hidden>
-          <span class="challenge-label">Style challenge</span>
+          <span class="challenge-label" id="challengeLabel">Style challenge</span>
           <p id="challengeText"></p>
           <div class="challenge-actions">
-            <button class="mini" id="challengeDone" type="button">I'm done!</button>
-            <button class="mini ghost" id="challengeNew" type="button">New one</button>
+            <button class="mini" id="challengeDone" type="button">Judge my look!</button>
+            <button class="mini ghost" id="challengeNew" type="button">Change</button>
             <button class="mini ghost" id="challengeClose" type="button" aria-label="Close challenge">✕</button>
           </div>
         </div>
@@ -79,6 +91,10 @@
             <span class="sew-btn" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
             Surprise me!
           </button>
+          <button class="btn-soft" id="dance" type="button" aria-label="Dance">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V6l10-2v12"/><circle cx="7" cy="18" r="2.5"/><circle cx="17" cy="16" r="2.5"/></svg>
+            <span class="txt">Dance!</span>
+          </button>
           <button class="btn-soft" id="photo" type="button" aria-label="Snap photo">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
             <span class="txt">Snap photo</span>
@@ -92,7 +108,10 @@
 
       <section class="wardrobe" aria-label="Wardrobe">
         <nav class="tabs" id="tabs" role="tablist" aria-label="Wardrobe drawers"></nav>
-        <div class="drawer" id="drawer" role="tabpanel"></div>
+        <div class="drawer" id="drawer" role="tabpanel">
+          <div class="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="m16 16 4 4"/></svg><input id="search" type="search" placeholder="Find anything: crown, beach, cozy…" aria-label="Search the wardrobe" autocomplete="off"></div>
+          <div id="drawerBody"></div>
+        </div>
       </section>
     </main>
   </div>
@@ -104,8 +123,20 @@
         <h2 id="closetTitle">Your closet</h2>
         <button class="mini ghost" data-close type="button" aria-label="Close closet">✕</button>
       </div>
-      <p class="modal-sub">Saved looks live on this device. Tap one to wear it again.</p>
+      <p class="modal-sub">Saved looks live on this device. Tap one to wear it again, or put on a show.</p>
+      <div class="closet-bar" id="closetBar"></div>
       <div id="closetGrid" class="closet-grid"></div>
+    </div>
+  </div>
+
+  <!-- shared sheet: unlocks, challenges, judge, share, settings -->
+  <div id="sheet" class="modal" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+      <div class="modal-head">
+        <h2 id="sheetTitle"></h2>
+        <button class="mini ghost" data-close type="button" aria-label="Close">✕</button>
+      </div>
+      <div id="sheetBody"></div>
     </div>
   </div>
 
@@ -129,8 +160,15 @@
   <script src="js/wardrobe-clothes.js"></script>
   <script src="js/wardrobe-accessories.js"></script>
   <script src="js/world.js"></script>
+  <script src="js/extras.js"></script>
   <script src="js/render.js"></script>
+  <script src="js/challenges.js"></script>
+  <script src="js/progress.js"></script>
+  <script src="js/fabric.js"></script>
+  <script src="js/share.js"></script>
   <script src="js/sound.js"></script>
+  <script src="js/show.js"></script>
+  <script src="js/paperdoll.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

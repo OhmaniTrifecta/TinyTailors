@@ -6,15 +6,19 @@
   const I = (id, name, draw, o = {}) => Object.assign({ id, name, draw }, o);
   const dash = 'stroke-dasharray="5 5"';
   const stitch = (d, col = '#ffffff') => S(d, col, 2.2, `${dash} opacity=".85"`);
+  /* sleeves are drawn for the LEFT arm only and wrapped in a marker; the renderer moves them onto both arms so they follow poses */
+  const sl = x => `<!--SL-->${x}<!--/SL-->`;
+  TT.sl = sl;
 
   /* --- shirt building blocks --- */
   const body = (hem, fill) => P(`M150,240 Q200,232 250,240 Q268,248 270,272 L272,${hem - 14} Q272,${hem} 256,${hem + 2} L144,${hem + 2} Q128,${hem} 128,${hem - 14} L130,272 Q132,248 150,240Z`, fill);
-  const shortSl = fill => SYM(TUBE('M156,258 L138,290', 34, fill));
-  const longSl = (fill, cuff) => SYM(TUBE('M156,258 L120,318', 31, fill) + (cuff ? TUBE('M121,315 L118,320', 33, cuff) : ''));
-  const wideSl = fill => SYM(P('M150,250 L92,318 Q98,348 136,340 L156,306Z', fill));
+  const shortSl = fill => sl(TUBE('M156,258 L138,290', 34, fill));
+  const longSl = (fill, cuff) => sl(TUBE('M156,258 L120,318', 31, fill) + (cuff ? TUBE('M121,315 L118,320', 33, cuff) : ''));
+  const wideSl = fill => sl(P('M150,250 L92,318 Q98,348 136,340 L156,306Z', fill));
   const crew = col => P('M170,246 Q200,264 230,246 L234,253 Q200,274 166,253Z', col, 3);
   const vneck = (col, depth = 278) => P(`M176,246 L200,${depth} L224,246Z`, col, 3);
   const buttons = (x, ys, col = '#fff') => ys.map(y => C(x, y, 4.2, col, 2.5)).join('');
+  TT.TOPKIT = { body, shortSl, longSl, wideSl, crew, vneck, buttons, stitch, sl };
 
   TT.TOPS = [
     I('tee', 'Comfy tee', c => shortSl(c.fill) + body(340, c.fill) + crew(c.dark)),
@@ -46,10 +50,10 @@
     I('hawaiian', 'Aloha shirt', c => shortSl(c.fill) + body(342, c.fill) + SYM(P('M168,242 L184,270 L198,248Z', c.light, 3)) + S('M200,262 L200,342', OL, 3) +
       TT.flower(156, 290, 13, '#ffffff', '#ffd34d', 2) + TT.flower(240, 312, 12, '#ff9ec0', '#ffd34d', 2) + TT.flower(170, 330, 9, '#ffe17a', '#ff8f6b', 2) +
       P('M232,276 q14,-10 22,2 q-12,8 -22,-2z', '#7fcf8f', 2.5) + P('M144,316 q-4,-16 10,-18 q2,14 -10,18z', '#7fcf8f', 2.5)),
-    I('puffer', 'Puffer jacket', c => longSl(c.fill, c.dark) + SYM(S('M140,282 L150,288 M128,302 L138,308', OL, 3)) + body(350, c.fill) +
+    I('puffer', 'Puffer jacket', c => longSl(c.fill, c.dark) + sl(S('M140,282 L150,288 M128,302 L138,308', OL, 3)) + body(350, c.fill) +
       S('M131,278 Q200,288 269,278 M130,304 Q200,314 270,304 M130,328 Q200,338 270,328', OL, 3) + P('M156,236 L244,236 L242,258 Q200,268 158,258Z', c.fill) +
       S('M200,262 L200,350', c.darker, 3) + R(196, 268, 8, 12, 2, '#e9e4f0', 2)),
-    I('astro', 'Space suit', c => longSl(c.fill, '#c9cde0') + SYM(TUBE('M136,290 L132,296', 33, '#ff8f6b')) + body(348, c.fill) +
+    I('astro', 'Space suit', c => longSl(c.fill, '#c9cde0') + sl(TUBE('M136,290 L132,296', 33, '#ff8f6b')) + body(348, c.fill) +
       R(172, 280, 56, 36, 8, '#e4e7f2', 3) + C(186, 292, 5, '#ff6f86', 2) + C(200, 292, 5, '#ffe17a', 2) + C(214, 292, 5, '#6fd3cf', 2) + R(182, 303, 36, 6, 3, '#9cd3ff', 2) +
       R(232, 262, 22, 14, 3, '#9cd3ff', 2.5) + TT.star(243, 269, 4.5, '#ffffff', 0) + S('M131,332 L269,332', OL, 3)),
     I('knight', 'Knight armor', c => longSl('#c9cede', '#aeb4c8') + body(346, '#dde1ec') + S('M132,296 Q200,306 268,296 M131,320 Q200,330 269,320', '#aeb4c8', 3) +
@@ -57,7 +61,7 @@
       SYM(E(144, 262, 24, 16, '#c9cede', 4, rot(-24, 144, 262)) + C(144, 262, 3, '#8f97b0', 0))),
     I('pajama', 'Comfy PJs', c => longSl(c.fill, c.light) + body(346, c.fill) + SYM(P('M166,242 L184,268 L198,248Z', c.light, 3)) +
       S('M196,262 L196,346', c.light, 4) + buttons(206, [282, 306, 330], c.lighter) + R(146, 288, 28, 24, 6, c.light, 3) + P('M156,294 a7,7 0 1,0 8,10 a6,6 0 1,1 -8,-10z', '#ffe17a', 2)),
-    I('jersey', 'Team jersey', c => shortSl(c.fill) + SYM(TUBE('M141,285 L139,289', 34, '#ffffff')) + body(344, c.fill) + vneck('#ffffff', 274) + P('M182,246 L200,268 L218,246', 'none', 0) +
+    I('jersey', 'Team jersey', c => shortSl(c.fill) + sl(TUBE('M141,285 L139,289', 34, '#ffffff')) + body(344, c.fill) + vneck('#ffffff', 274) + P('M182,246 L200,268 L218,246', 'none', 0) +
       SYM(S('M134,280 L132,340', '#ffffff', 6)) + TT.star(200, 306, 20, '#ffffff', 3) + TT.star(200, 306, 9, c.dark, 0)),
     I('labcoat', 'Lab coat', c => longSl(c.lighter, c.light) + body(372, c.lighter) + S('M200,262 L200,372', OL, 3) +
       SYM(P('M160,240 L190,288 L196,252Z', c.light, 3)) + R(222, 290, 28, 26, 4, c.lighter, 3) + S('M230,292 L230,280 M238,292 L238,282', '#ff6f86', 4) + S('M244,292 L244,282', '#7c9fe0', 4) + buttons(206, [300, 330], c.light)),
@@ -77,7 +81,7 @@
       P('M130,322 L270,322 L270,336 L130,336Z', '#ffe17a', 3) + R(190, 320, 20, 18, 4, '#ffd34d', 3)),
     I('tux', 'Tuxedo', c => longSl(c.fill, '#ffffff') + body(352, c.fill) + P('M176,244 L200,300 L224,244Z', '#ffffff', 3) +
       SYM(P('M168,242 L198,304 L184,262Z', c.dark, 3)) + buttons(200, [316, 336], c.darker) + P('M226,280 l14,0 l-2,8 l-10,0z', '#ffffff', 2)),
-    I('ruffle', 'Ruffle blouse', c => SYM(TUBE('M156,258 L132,300', 38, c.fill) + C(132, 302, 13, c.light, 3)) + body(338, c.fill) +
+    I('ruffle', 'Ruffle blouse', c => sl(TUBE('M156,258 L132,300', 38, c.fill) + C(132, 302, 13, c.light, 3)) + body(338, c.fill) +
       [252, 268, 284].map(y => P(`M186,${y} Q200,${y + 12} 214,${y} Q200,${y + 22} 186,${y}Z`, c.light, 3)).join(''))
   ];
 
@@ -86,6 +90,7 @@
   const shortsD = 'M132,316 L268,316 L272,370 L208,372 L200,350 L192,372 L128,370Z';
   const skirtD = 'M138,314 L262,314 L286,384 Q200,398 114,384Z';
   const waist = c => P('M133,314 L267,314 L267,328 L133,328Z', c.dark, 3);
+  TT.BOTKIT = { pantsD, shortsD, skirtD, waist };
   TT.BOTTOMS = [
     I('shorts', 'Shorts', c => P(shortsD, c.fill) + waist(c)),
     I('pants', 'Trousers', c => P(pantsD, c.fill) + waist(c) + S('M200,328 L200,346', OL, 3)),
@@ -131,6 +136,7 @@
   const lowShoe = 'M148,414 Q146,394 168,394 Q192,394 201,410 Q202,422 188,422 L156,422 Q148,422 148,414Z';
   const sole = col => P('M147,412 L202,412 Q203,425 188,425 L156,425 Q147,425 147,412Z', col, 3.5);
   const shaft = (top, fill) => P(`M158,${top} L192,${top} L194,404 L156,404Z`, fill);
+  TT.SHOEKIT = { lowShoe, sole, shaft };
   TT.SHOES = [
     I('sneakers', 'Sneakers', c => SYM(P(lowShoe, c.fill) + sole('#ffffff') + S('M166,400 L178,404 M164,406 L182,402', OL, 2.5))),
     I('hightops', 'High-tops', c => SYM(shaft(374, c.fill) + P(lowShoe, c.fill) + sole('#ffffff') + C(172, 390, 7, '#ffffff', 2.5) + TT.star(172, 390, 5, c.dark, 0) + S('M162,380 L188,384 M162,370 L188,374', '#ffffff', 2.5))),

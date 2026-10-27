@@ -36,7 +36,32 @@
       this.tone(1320, 0.1, 'sine', 0.1, 0.06);
     },
     cheer() { [523, 659, 784, 1047, 784, 1047].forEach((f, i) => this.tone(f, 0.2, 'triangle', 0.14, i * 0.09)); },
-    undo() { this.tone(600, 0.12, 'sine', 0.12, 0, 0.6); }
+    undo() { this.tone(600, 0.12, 'sine', 0.12, 0, 0.6); },
+    coin() { [988, 1319].forEach((f, i) => this.tone(f, 0.12, 'square', 0.06, i * 0.08)); },
+    /* a bouncy little loop for dancing and the runway */
+    music: null,
+    startMusic() {
+      this.stopMusic(); this.wake();
+      const mel = [523, 659, 784, 659, 587, 698, 880, 698, 523, 659, 784, 1047, 988, 784, 659, 587];
+      const bass = [131, 131, 175, 175, 147, 147, 196, 196];
+      let i = 0;
+      this.music = setInterval(() => {
+        if (!this.on) return;
+        this.tone(mel[i % mel.length], 0.16, 'triangle', 0.07);
+        if (i % 2 === 0) this.tone(bass[(i / 2) % bass.length], 0.22, 'sine', 0.1);
+        if (i % 4 === 2) this.tone(2200, 0.03, 'square', 0.02);
+        i++;
+      }, 180);
+    },
+    stopMusic() { if (this.music) clearInterval(this.music); this.music = null; },
+    say(text) {
+      try {
+        if (!('speechSynthesis' in window)) return;
+        speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(text); u.rate = 1; u.pitch = 1.3;
+        speechSynthesis.speak(u);
+      } catch (e) { }
+    }
   };
   TT.Sound = Sound;
 })(window.TT);

@@ -24,9 +24,13 @@ window.TT = window.TT || {};
   TT.mix = mix; TT.shade = shade; TT.tint = tint;
 
   /* colour pack handed to every item's draw function */
-  TT.pack = function (base, fill) {
+  /* trim: optional second colour picked by the player (collars, cuffs, bands, pattern accents) */
+  TT.pack = function (base, fill, trim) {
+    if (trim) {
+      return { base, fill: fill || base, trim, dark: trim, darker: shade(trim, 0.3), light: tint(trim, 0.3), lighter: tint(trim, 0.58) };
+    }
     return {
-      base, fill: fill || base,
+      base, fill: fill || base, trim: null,
       dark: shade(base, 0.22), darker: shade(base, 0.45),
       light: tint(base, 0.45), lighter: tint(base, 0.72)
     };
@@ -96,7 +100,11 @@ window.TT = window.TT || {};
     { id: 'cream', name: 'Cream', hex: '#fff3dc' },
     { id: 'cocoa', name: 'Cocoa', hex: '#b88a6e' },
     { id: 'cloud', name: 'Cloud', hex: '#ffffff' },
-    { id: 'night', name: 'Midnight', hex: '#5f5a7a' }
+    { id: 'night', name: 'Midnight', hex: '#5f5a7a' },
+    { id: 'gold', name: 'Gold', hex: '#f2c14e', locked: 15 },
+    { id: 'silver', name: 'Silver', hex: '#cfd5e3', locked: 15 },
+    { id: 'rosegold', name: 'Rose gold', hex: '#efb3a3', locked: 15 },
+    { id: 'cosmic', name: 'Cosmic', hex: '#3d3478', locked: 15 }
   ];
   TT.FUR = [
     { id: 'natural', name: 'Natural', hex: null },
@@ -111,7 +119,9 @@ window.TT = window.TT || {};
     { id: 'lilac', name: 'Lilac', hex: '#d8c2ff' },
     { id: 'seafoam', name: 'Seafoam', hex: '#b5ecd8' },
     { id: 'babyblue', name: 'Baby blue', hex: '#bfe0ff' },
-    { id: 'lemon', name: 'Lemon', hex: '#fff09a' }
+    { id: 'lemon', name: 'Lemon', hex: '#fff09a' },
+    { id: 'goldfur', name: 'Golden', hex: '#f2c14e', locked: 20 },
+    { id: 'starry', name: 'Starry night', hex: '#6f63b8', locked: 20 }
   ];
 
   /* ---------- fabric patterns ---------- */
@@ -127,12 +137,20 @@ window.TT = window.TT || {};
     { id: 'plaid', name: 'Plaid' },
     { id: 'rainbow', name: 'Rainbow' },
     { id: 'spots', name: 'Cow spots' },
-    { id: 'checker', name: 'Checkers' }
+    { id: 'checker', name: 'Checkers' },
+    { id: 'galaxy', name: 'Galaxy', locked: 25 },
+    { id: 'glitter', name: 'Glitter', locked: 20 },
+    { id: 'leopard', name: 'Leopard', locked: 20 },
+    { id: 'strawberries', name: 'Strawberries', locked: 20 },
+    { id: 'clouds', name: 'Fluffy clouds', locked: 20 }
   ];
-  TT.patternDef = function (id, kind, base) {
+  TT.patternDef = function (id, kind, base, accent) {
     if (!kind || kind === 'solid') return '';
-    const l = tint(base, 0.62), d = shade(base, 0.18), W = '#ffffff';
-    const pale = (base.toLowerCase() === '#ffffff' || base.toLowerCase() === '#fff3dc');
+    if (kind.startsWith('fab')) return TT.fabricDef ? TT.fabricDef(id, kind, base, accent) : '';
+    const d = shade(base, 0.18);
+    const W = accent || '#ffffff';
+    const l = accent || tint(base, 0.62);
+    const pale = !accent && (base.toLowerCase() === '#ffffff' || base.toLowerCase() === '#fff3dc');
     const acc = pale ? '#ffb3cc' : l;
     let s = 22, body = '';
     switch (kind) {
@@ -146,6 +164,11 @@ window.TT = window.TT || {};
       case 'plaid': s = 24; body = `<rect width="24" height="24" fill="${base}"/><rect x="0" y="8" width="24" height="7" fill="${d}" opacity=".45"/><rect x="8" y="0" width="7" height="24" fill="${d}" opacity=".45"/><rect x="0" y="20" width="24" height="2" fill="${W}" opacity=".7"/><rect x="20" y="0" width="2" height="24" fill="${W}" opacity=".7"/>`; break;
       case 'rainbow': s = 36; body = ['#ff9eb0', '#ffc38a', '#ffe98a', '#a8e8b8', '#9cd3ff', '#c8a8ff'].map((c, i) => `<rect y="${i * 6}" width="36" height="6" fill="${c}"/>`).join(''); break;
       case 'spots': s = 40; body = `<rect width="40" height="40" fill="${pale ? '#ffffff' : W}"/><path d="M6,4 q10,-4 12,6 q2,9 -9,8 q-8,-1 -6,-8z M26,22 q9,-3 11,5 q1,8 -8,8 q-9,0 -7,-7z M30,2 q5,0 5,4 q-1,4 -5,3z" fill="${pale ? '#6d6585' : base}"/>`; break;
+      case 'galaxy': s = 40; body = `<rect width="40" height="40" fill="${shade(base, 0.55)}"/><circle cx="8" cy="10" r="1.6" fill="#fff"/><circle cx="30" cy="6" r="1" fill="#fff"/><circle cx="22" cy="28" r="1.8" fill="${accent || '#ffe58a'}"/><circle cx="4" cy="32" r="1" fill="#fff"/><circle cx="34" cy="34" r="1.3" fill="#c8b6ff"/>` + TT.star(16, 20, 3.4, '#ffffff', 0, 0.4, 4); break;
+      case 'glitter': s = 18; body = `<rect width="18" height="18" fill="${base}"/><circle cx="3" cy="4" r="1.2" fill="#fff"/><circle cx="11" cy="2" r=".9" fill="${accent || '#ffe58a'}"/><circle cx="15" cy="11" r="1.3" fill="#fff"/><circle cx="6" cy="13" r=".9" fill="${accent || '#ffd0f0'}"/><circle cx="10" cy="16" r="1" fill="#fff"/>`; break;
+      case 'leopard': s = 34; body = `<rect width="34" height="34" fill="${base}"/>` + [[8, 8], [26, 12], [14, 26], [30, 30]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="4.2" fill="${accent || shade(base, 0.25)}"/><path d="M${x - 5},${y - 3} q2,-5 6,-4 M${x + 5},${y + 2} q-1,5 -6,4" fill="none" stroke="${shade(base, 0.6)}" stroke-width="2" stroke-linecap="round"/>`).join(''); break;
+      case 'strawberries': s = 30; body = `<rect width="30" height="30" fill="${base}"/>` + [[8, 9], [23, 23]].map(([x, y]) => `<path d="M${x - 5},${y - 2} q5,-3 10,0 q-1,9 -5,10 q-4,-1 -5,-10z" fill="#ff6f86"/><path d="M${x - 4},${y - 3} l4,-3 l4,3z" fill="#7fcf8f"/><circle cx="${x - 1}" cy="${y + 2}" r=".8" fill="#fff3a8"/><circle cx="${x + 2}" cy="${y + 4}" r=".8" fill="#fff3a8"/>`).join(''); break;
+      case 'clouds': s = 36; body = `<rect width="36" height="36" fill="${base}"/>` + [[9, 10], [27, 28]].map(([x, y]) => `<circle cx="${x - 4}" cy="${y}" r="4" fill="${W}"/><circle cx="${x + 1}" cy="${y - 2}" r="5" fill="${W}"/><circle cx="${x + 6}" cy="${y}" r="4" fill="${W}"/><rect x="${x - 8}" y="${y}" width="18" height="4" rx="2" fill="${W}"/>`).join(''); break;
       case 'checker': s = 20; body = `<rect width="20" height="20" fill="${base}"/><rect width="10" height="10" fill="${pale ? '#ffd0df' : W}" opacity=".8"/><rect x="10" y="10" width="10" height="10" fill="${pale ? '#ffd0df' : W}" opacity=".8"/>`; break;
       default: return '';
     }

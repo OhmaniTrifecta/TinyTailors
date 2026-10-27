@@ -16,13 +16,13 @@
   const A = (id, name, o) => Object.assign({ id, name, alt: '#fff6ec', inner: '#ffb3c4', nose: '#ff8fa8', muzzle: 'cat', tail: 'stub', marks: [], mouthY: 210 }, o);
   TT.ANIMALS = [
     A('cat', 'Kitty', { fur: '#ffc98f', ears: 'cat', marks: ['tabby'], whiskers: 1, tail: 'cat' }),
-    A('bunny', 'Bunny', { fur: '#fff6f8', ears: 'bunny', tail: 'puff', whiskers: 1 }),
+    A('bunny', 'Bunny', { tall: 1, fur: '#fff6f8', ears: 'bunny', tail: 'puff', whiskers: 1 }),
     A('dog', 'Puppy', { fur: '#f3cf9e', ears: 'floppy', earColor: '#bf8a66', muzzle: 'dog', marks: ['spot'], tail: 'dog', mouthY: 212 }),
     A('bear', 'Bear', { fur: '#c99674', alt: '#f6dfc6', ears: 'round', muzzle: 'bear', mouthY: 212 }),
     A('panda', 'Panda', { fur: '#ffffff', ears: 'round', earColor: '#56506a', limb: '#56506a', marks: ['panda'], muzzle: 'small', tail: 'stub' }),
-    A('fox', 'Fox', { fur: '#ffa463', alt: '#fffaf2', inner: '#fff1e2', ears: 'fox', muzzle: 'fox', tail: 'fox', limb: '#8a5f5f', limbOnly: 'feet' }),
+    A('fox', 'Fox', { tall: 1, fur: '#ffa463', alt: '#fffaf2', inner: '#fff1e2', ears: 'fox', muzzle: 'fox', tail: 'fox', limb: '#8a5f5f', limbOnly: 'feet' }),
     A('pig', 'Piglet', { fur: '#ffc8d2', inner: '#ff9fb2', ears: 'pig', muzzle: 'pig', tail: 'curl', mouthY: 216 }),
-    A('frog', 'Froggy', { fur: '#a6e394', alt: '#effad2', ears: 'frog', muzzle: 'none', tail: 'none', mouthY: 204 }),
+    A('frog', 'Froggy', { fur: '#a6e394', alt: '#effad2', ears: 'frog', muzzle: 'none', tail: 'none', mouthY: 200, eyeDY: -64, hatDY: -30, hatScale: 0.86 }),
     A('koala', 'Koala', { fur: '#bdb8ca', alt: '#f2eef8', inner: '#ffffff', ears: 'koala', muzzle: 'koala', mouthY: 218 }),
     A('mouse', 'Mouse', { fur: '#d9d3e2', ears: 'mouse', whiskers: 1, tail: 'mouse' }),
     A('hamster', 'Hamster', { fur: '#ffd7a0', alt: '#fffaf0', ears: 'small', marks: ['cheeks'], whiskers: 1 }),
@@ -32,17 +32,18 @@
     A('penguin', 'Penguin', { fur: '#5d6286', alt: '#ffffff', ears: 'none', marks: ['penguin'], muzzle: 'beak', tail: 'bird', foot: '#ffb347', mouthY: 222 }),
     A('owl', 'Owlet', { fur: '#c9a98f', alt: '#f6ebda', ears: 'tufts', marks: ['owl'], muzzle: 'beak', tail: 'bird', foot: '#ffb347', mouthY: 222 }),
     A('duck', 'Duckling', { fur: '#ffe27a', alt: '#fff6c9', ears: 'none', extra: ['ducktuft'], muzzle: 'bill', tail: 'bird', foot: '#ffa23f', mouthY: null }),
-    A('unicorn', 'Unicorn', { fur: '#fff8fc', alt: '#ffeef6', inner: '#ffc4dc', ears: 'horse', muzzle: 'horse', extra: ['horn', 'unimane'], tail: 'unicorn', mouthY: 222 }),
+    A('unicorn', 'Unicorn', { tall: 1, fur: '#fff8fc', alt: '#ffeef6', inner: '#ffc4dc', ears: 'horse', muzzle: 'horse', extra: ['horn', 'unimane'], tail: 'unicorn', mouthY: 222 }),
     A('axolotl', 'Axolotl', { fur: '#ffc8e0', alt: '#ffe6f1', ears: 'gills', muzzle: 'none', tail: 'axo', mouthY: 206 }),
     A('sheep', 'Lamb', { fur: '#fffaf2', alt: '#ffe9da', ears: 'sheep', earColor: '#f2d4c0', extra: ['wool'], muzzle: 'small', tail: 'fluff' }),
-    A('cow', 'Moo Cow', { fur: '#ffffff', alt: '#ffc4cf', ears: 'cow', marks: ['cow'], muzzle: 'cow', tail: 'tuft', mouthY: 226 }),
-    A('deer', 'Fawn', { fur: '#dca578', alt: '#fff3e4', ears: 'deer', extra: ['antlers'], marks: ['fawn'], muzzle: 'small', tail: 'puff' }),
+    A('cow', 'Moo Cow', { tall: 1, fur: '#ffffff', alt: '#ffc4cf', ears: 'cow', marks: ['cow'], muzzle: 'cow', tail: 'tuft', mouthY: 226 }),
+    A('deer', 'Fawn', { tall: 1, fur: '#dca578', alt: '#fff3e4', ears: 'deer', extra: ['antlers'], marks: ['fawn'], muzzle: 'small', tail: 'puff' }),
     A('monkey', 'Monkey', { fur: '#b98a6d', alt: '#ffe1c8', ears: 'monkey', marks: ['monkeyface'], muzzle: 'nostrils', tail: 'monkey', mouthY: 214 }),
-    A('dragon', 'Dragon', { fur: '#a8e6c8', alt: '#fff4c2', ears: 'dragon', muzzle: 'nostrils', tail: 'dragon', extra: ['spikes'], mouthY: 212 }),
+    A('dragon', 'Dragon', { tall: 1, fur: '#a8e6c8', alt: '#fff4c2', ears: 'dragon', muzzle: 'nostrils', tail: 'dragon', extra: ['spikes'], mouthY: 212 }),
     A('redpanda', 'Red Panda', { fur: '#ff9a62', alt: '#ffffff', inner: '#ffffff', ears: 'redpanda', marks: ['redpanda'], muzzle: 'small', limb: '#6b4a52', tail: 'ringed', ringColor: '#c4643f' }),
     A('elephant', 'Elephant', { fur: '#c5cbea', alt: '#eef0ff', inner: '#ffc6d6', ears: 'elephant', muzzle: 'trunk', tail: 'tuft', mouthY: null }),
-    A('giraffe', 'Giraffe', { fur: '#ffd47e', alt: '#fff3d6', ears: 'giraffe', extra: ['ossicones'], marks: ['giraffe'], muzzle: 'horse', tail: 'tuft', mouthY: 222 })
+    A('giraffe', 'Giraffe', { tall: 1, fur: '#ffd47e', alt: '#fff3d6', ears: 'giraffe', extra: ['ossicones'], marks: ['giraffe'], muzzle: 'horse', tail: 'tuft', mouthY: 222 })
   ];
+  TT.ANIMAL_DEF = A;
   TT.animalById = id => TT.ANIMALS.find(a => a.id === id) || TT.ANIMALS[0];
 
   /* ---------------- ears & things behind the head ---------------- */
@@ -96,7 +97,13 @@
         back.push(SYM(C(104, 170, 27, F) + C(105, 170, 15, a.alt, 0)));
         break;
       case 'frog':
-        back.push(SYM(C(144, 98, 34, F)));
+        front.push(SYM(C(162, 112, 31, F) + E(162, 132, 26, 8, F, 0)));
+        break;
+      case 'bat':
+        back.push(SYM(P('M118,140 L84,40 Q92,34 100,40 L184,96 Z', F) + P('M126,120 L100,58 L166,98 Z', a.inner, 0)));
+        break;
+      case 'alpaca':
+        back.push(SYM(E(130, 70, 13, 30, F, 4, rot(-18, 130, 70)) + E(130, 74, 6, 20, a.inner, 0, rot(-18, 130, 74))));
         break;
       case 'tufts':
         back.push(SYM(P('M120,120 L104,58 Q120,66 168,94 Z', shade(F, 0.12))));
@@ -169,6 +176,8 @@
         case 'fawn': s += C(176, 108, 5, '#fff3e4', 0) + C(200, 98, 6, '#fff3e4', 0) + C(224, 108, 5, '#fff3e4', 0); break;
         case 'monkeyface': s += P('M200,140 C178,116 126,126 126,178 C126,226 170,246 200,246 C230,246 274,226 274,178 C274,126 222,116 200,140Z', a.alt, 0); break;
         case 'redpanda': s += SYM(E(158, 142, 13, 8, '#ffffff', 0)) + E(200, 214, 50, 34, '#ffffff', 0) + SYM(S('M152,192 Q150,208 140,218', '#b8553c', 6)); break;
+        case 'sloth': s += P('M200,130 C170,116 112,130 116,176 C120,228 168,246 200,246 C232,246 280,228 284,176 C288,130 230,116 200,130Z', a.alt, 0) + SYM(P('M128,170 Q140,150 172,160 Q190,170 186,186 Q168,198 140,190 Q126,184 128,170Z', '#8a6b5a', 0)); break;
+        case 'narwhal': s += C(150, 110, 5, tint(F, 0.5), 0) + C(170, 98, 4, tint(F, 0.5), 0) + C(244, 104, 5, tint(F, 0.5), 0) + C(262, 124, 3.5, tint(F, 0.5), 0); break;
         case 'giraffe': s += P('M136,112 q14,-10 24,0 q4,14 -10,16 q-14,0 -14,-16z', '#e2a052', 0) + P('M244,104 q16,-6 22,6 q0,12 -14,12 q-12,-2 -8,-18z', '#e2a052', 0) + P('M262,206 q12,-6 18,4 q-2,12 -12,10 q-10,-4 -6,-14z', '#e2a052', 0); break;
       }
     }
@@ -192,6 +201,8 @@
       case 'cow': return E(200, 212, 44, 26, al, 3.5) + E(186, 208, 5, 7, shade(al, 0.35), 0) + E(214, 208, 5, 7, shade(al, 0.35), 0);
       case 'koala': return E(200, 198, 16, 20, '#5d5468', 3) + E(195, 190, 4, 6, '#fff', 0, 'opacity=".7"');
       case 'fox': return P('M116,188 Q160,176 200,202 Q240,176 284,188 Q266,242 200,250 Q134,242 116,188Z', al, 0) + E(200, 198, 9, 6.5, '#4f4560', 0);
+      case 'capy': return E(200, 208, 50, 32, al, 3.5) + E(186, 198, 4, 6, shade(al, 0.45), 0) + E(214, 198, 4, 6, shade(al, 0.45), 0);
+      case 'otter': return SYM(E(184, 206, 18, 14, al, 0)) + E(200, 196, 12, 8.5, '#4b3a50', 0) + E(197, 193.5, 4, 2.2, '#fff', 0);
       case 'nostrils': return C(193, 198, 2.6, shade(F, 0.45), 0) + C(207, 198, 2.6, shade(F, 0.45), 0);
       default: return '';
     }
@@ -210,6 +221,17 @@
       let w = '';
       [[150, 92], [174, 80], [200, 76], [226, 80], [250, 92], [164, 104], [200, 98], [236, 104]].forEach(([x, y]) => { w += C(x, y, 22, a.fur); });
       s += w + [[164, 104], [200, 98], [236, 104]].map(([x, y]) => C(x, y, 20, a.fur, 0)).join('');
+    }
+    if (ex.includes('yuzu')) {
+      s += C(200, 78, 17, '#ffb347') + P('M200,62 Q208,50 220,54 Q212,64 200,62Z', '#7fcf8f', 3) + C(195, 73, 4, '#ffd9a0', 0);
+    }
+    if (ex.includes('tusk')) {
+      s += P('M192,88 L214,8 L208,90 Q200,94 192,88Z', '#fff7e6') + S('M196,74 L211,66 M199,56 L212,48 M202,38 L213,30', '#e8d6b8', 3);
+    }
+    if (ex.includes('alpacawool')) {
+      let w = '';
+      [[160, 92], [184, 80], [210, 78], [236, 86], [174, 102], [204, 96], [228, 104]].forEach(([x, y]) => { w += C(x, y, 20, a.fur); });
+      s += w + [[174, 102], [204, 96], [228, 104]].map(([x, y]) => C(x, y, 18, a.fur, 0)).join('');
     }
     if (ex.includes('ducktuft')) {
       s += P('M196,84 Q186,56 200,52 Q194,66 206,74 Q212,56 222,60 Q210,70 210,84 Z', F, 4);
@@ -231,11 +253,12 @@
     determined: (x, y, i) => eye.dot(x, y) + S(i === 0 ? `M${x - 13},${y - 22} L${x + 9},${y - 15}` : `M${x + 13},${y - 22} L${x - 9},${y - 15}`, INK, 5),
     button: (x, y) => C(x, y, 11, '#6e5a8a', 0) + C(x, y, 7.5, 'none', 0, `stroke="#8f7bb0" stroke-width="1.6"`) +
       C(x - 2.6, y - 2.6, 1.6, '#e8defa', 0) + C(x + 2.6, y - 2.6, 1.6, '#e8defa', 0) + C(x - 2.6, y + 2.6, 1.6, '#e8defa', 0) + C(x + 2.6, y + 2.6, 1.6, '#e8defa', 0) +
-      S(`M${x - 2.6},${y - 2.6} L${x + 2.6},${y + 2.6} M${x + 2.6},${y - 2.6} L${x - 2.6},${y + 2.6}`, '#fff6ff', 1.4)
+      S(`M${x - 2.6},${y - 2.6} L${x + 2.6},${y + 2.6} M${x + 2.6},${y - 2.6} L${x - 2.6},${y + 2.6}`, '#fff6ff', 1.4),
+    teary: (x, y) => eye.sparkle(x, y) + P(`M${x + 9},${y + 12} q5,8 0,12 q-5,-4 0,-12z`, '#9cd3ff', 2) + S(`M${x - 12},${y - 21} L${x + 8},${y - 24}`, INK, 4)
   };
   TT.EYES = [
     ['sparkle', 'Sparkly'], ['dot', 'Button-cute'], ['happy', 'Happy'], ['wink', 'Wink'], ['star', 'Star-struck'],
-    ['heart', 'Love'], ['sleepy', 'Sleepy'], ['surprised', 'Surprised'], ['determined', 'Brave'], ['button', 'Sewn buttons']
+    ['heart', 'Love'], ['sleepy', 'Sleepy'], ['surprised', 'Surprised'], ['determined', 'Brave'], ['button', 'Sewn buttons'], ['teary', 'Teary']
   ].map(([id, name]) => ({ id, name, draw: () => EX.map((x, i) => eye[id](x, EY, i)).join('') }));
 
   const mouth = {
@@ -246,10 +269,12 @@
     o: y => E(200, y + 5, 5.5, 7, '#e8607a', 3),
     grin: y => P(`M183,${y - 1} Q200,${y + 4} 217,${y - 1} Q213,${y + 17} 200,${y + 17} Q187,${y + 17} 183,${y - 1}Z`, '#fff', 3.5),
     smirk: y => S(`M190,${y + 4} Q203,${y + 8} 213,${y - 2}`, OL, 3.5),
-    fang: y => mouth.cat(y) + P(`M204,${y + 3} L207,${y + 11} L210,${y + 3.5}Z`, '#fff', 2)
+    fang: y => mouth.cat(y) + P(`M204,${y + 3} L207,${y + 11} L210,${y + 3.5}Z`, '#fff', 2),
+    frown: y => S(`M190,${y + 8} Q200,${y - 2} 210,${y + 8}`, OL, 3.5),
+    wobbly: y => S(`M186,${y + 4} q4.5,-5 9,0 q4.5,5 9,0 q4.5,-5 9,0`, OL, 3.2)
   };
   TT.MOUTHS = [
-    ['cat', 'Kitty smile'], ['smile', 'Smile'], ['open', 'Yay!'], ['tongue', 'Silly'], ['o', 'Ooh'], ['grin', 'Big grin'], ['smirk', 'Smirk'], ['fang', 'Lil fang']
+    ['cat', 'Kitty smile'], ['smile', 'Smile'], ['open', 'Yay!'], ['tongue', 'Silly'], ['o', 'Ooh'], ['grin', 'Big grin'], ['smirk', 'Smirk'], ['fang', 'Lil fang'], ['frown', 'Grumpy'], ['wobbly', 'Wobbly']
   ].map(([id, name]) => ({ id, name, draw: (a) => (a && a.mouthY === null) ? '' : mouth[id]((a && a.mouthY) || 210) }));
 
   TT.BLUSH = [
@@ -284,6 +309,8 @@
       case 'fluff': return C(262, 342, 14, F) + C(272, 352, 12, F) + C(258, 354, 11, F);
       case 'tuft': return S('M254,344 Q290,348 300,318', OL, 12) + S('M254,344 Q290,348 300,318', F, 5) + P('M292,322 Q296,300 310,304 Q310,318 300,326 Z', '#7a6080', 3);
       case 'monkey': return TUBE('M252,342 Q314,344 314,292 Q314,262 290,266 Q276,270 284,286', 10, F);
+      case 'otter': return P('M248,336 Q300,340 328,300 Q332,314 318,334 Q296,358 250,356Z', F);
+      case 'whale': return TUBE('M250,344 Q292,346 306,320', 16, F) + P('M300,322 Q290,300 300,290 Q310,304 308,316 Q322,304 336,306 Q326,318 312,326Z', F);
       case 'dragon': return TUBE('M250,344 Q306,354 320,316 Q326,298 340,290', 18, F) + P('M332,282 L362,276 L346,302 Z', '#7fd0b0') + P('M286,342 L296,326 L304,342 Z M310,320 L324,312 L322,330Z', '#7fd0b0', 3);
       default: return '';
     }
