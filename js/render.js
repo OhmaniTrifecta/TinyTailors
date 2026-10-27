@@ -72,10 +72,10 @@
     critter += back.back || '';
     critter += `<g class="${animated ? 'tail' : ''}">${k.tail(a, F)}</g>`;
     critter += hair.back || '';
-    critter += hideFeet ? '' : k.legs(a, F) + k.feet(a, F);
+    // legs, then shoes (socks & boot shafts sit on the leg), then torso, then bottoms over all of it
+    critter += hideFeet ? '' : k.legs(a, F) + k.feet(a, F) + (shoes.main || '');
     critter += k.torso(a, F);
     critter += bottom.main || '';
-    critter += hideFeet ? '' : (shoes.main || '');
     critter += k.arms(a, F);
     critter += top.main || '';
     critter += bottom.over || '';
