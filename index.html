@@ -140,6 +140,29 @@
     </div>
   </div>
 
+  <!-- paper doll / coloring page -->
+  <div id="dollModal" class="modal" hidden>
+    <div class="modal-card doll-card" role="dialog" aria-modal="true" aria-labelledby="dollTitle">
+      <div class="modal-head">
+        <button class="back-btn" data-dollback type="button">← Back to my critter</button>
+        <h2 id="dollTitle">Paper doll</h2>
+      </div>
+      <div class="doll-switch" role="group" aria-label="Page type">
+        <button type="button" class="mini" data-dollmode="color" aria-pressed="true">In color</button>
+        <button type="button" class="mini" data-dollmode="coloring" aria-pressed="false">Coloring page</button>
+      </div>
+      <div class="doll-preview"><img id="dollImg" alt="Printable paper doll page"><p id="dollWait" class="modal-sub">Sewing your page…</p></div>
+      <div class="doll-actions">
+        <button class="btn-big" type="button" data-dollact="print">Print</button>
+        <button class="btn-soft" type="button" data-dollact="pdf">Save PDF</button>
+        <button class="btn-soft" type="button" data-dollact="png">Save picture</button>
+      </div>
+      <div class="doll-actions"><button class="back-btn" data-dollback type="button">← Back to my critter</button></div>
+      <p class="modal-sub doll-tip" id="dollTip">The page is US Letter size. On a phone or tablet you can also press and hold the picture to save or share it.</p>
+    </div>
+  </div>
+  <div id="printSheet" aria-hidden="true"><img id="printImg" alt=""></div>
+
   <!-- photo -->
   <div id="photoModal" class="modal" hidden>
     <div class="modal-card photo-card" role="dialog" aria-modal="true" aria-labelledby="photoTitle">

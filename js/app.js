@@ -510,6 +510,50 @@
     toast(`Wearing ${state.name || 'a shared look'}!`);
   }
 
+  /* ---------------- paper doll & coloring page ---------------- */
+  let dollPNG = null, dollColoring = false, dollJob = 0;
+  async function openDoll(coloring) {
+    dollColoring = coloring;
+    if ($('#dollModal').hidden) { try { if (location.hash !== '#doll') location.hash = 'doll'; } catch (e) { } }
+    openModal('#dollModal');
+    window.scrollTo(0, 0);
+    $('#dollModal').querySelectorAll('[data-dollmode]').forEach(b => b.setAttribute('aria-pressed', (b.dataset.dollmode === 'coloring') === coloring));
+    $('#dollTitle').textContent = coloring ? 'Coloring page' : 'Paper doll';
+    $('#dollImg').hidden = true; $('#dollWait').hidden = false; dollPNG = null;
+    const job = ++dollJob;
+    try { await document.fonts.load('800 32px Sniglet'); await document.fonts.load('600 14px "Baloo 2"'); } catch (e) { }
+    const { svg } = TT.paperDollSVG(state, coloring);
+    const png = await TT.pageToPNG(svg, 2);
+    if (job !== dollJob) return;
+    dollPNG = png;
+    $('#dollImg').src = png; $('#dollImg').hidden = false; $('#dollWait').hidden = true;
+    $('#printImg').src = png;
+  }
+  const dollFile = ext => `${(state.name || 'tiny-tailors').replace(/[^a-z0-9]+/gi, '-').toLowerCase()}-${dollColoring ? 'coloring-page' : 'paper-doll'}.${ext}`;
+  function saveFile(url, name) {
+    const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  }
+  async function dollAction(kind) {
+    if (!dollPNG) return;
+    if (kind === 'print') {
+      $('#printImg').src = dollPNG;
+      document.body.classList.add('printing');
+      setTimeout(() => { try { window.print(); } catch (e) { } }, 60);
+      const done = () => { document.body.classList.remove('printing'); window.removeEventListener('afterprint', done); };
+      window.addEventListener('afterprint', done);
+      setTimeout(done, 4000);
+      $('#dollTip').textContent = 'If the print window didn’t open, use Save PDF and print that file.';
+    } else if (kind === 'png') {
+      saveFile(dollPNG, dollFile('png'));
+      $('#dollTip').textContent = 'Saved a picture. If nothing downloaded, press and hold the picture to save it.';
+    } else if (kind === 'pdf') {
+      $('#dollTip').textContent = 'Making your PDF…';
+      try { await TT.pngToPDF(dollPNG, dollFile('pdf')); $('#dollTip').textContent = 'Saved a PDF. Open it and print!'; }
+      catch (e) { saveFile(dollPNG, dollFile('png')); $('#dollTip').textContent = 'Couldn’t make a PDF right now, so we saved a picture instead. You can print that too.'; }
+    }
+    Sound.pop();
+  }
+
   /* ---------------- settings ---------------- */
   function applySettings() {
     const s = PR.settings;
@@ -676,10 +720,7 @@
       const k = b.dataset.menu;
       if (k === 'share') openShare();
       if (k === 'fabric') TT.openFabricStudio({ onDone: () => renderDrawer() });
-      if (k === 'doll' || k === 'coloring') {
-        const ok = TT.printPaperDoll(state, k === 'coloring');
-        toast(ok ? 'Opening your printable sheet…' : 'Printing works on the published website');
-      }
+      if (k === 'doll' || k === 'coloring') openDoll(k === 'coloring');
       if (k === 'settings') openSettings();
       if (k === 'home') $('#home').click();
     });
@@ -713,6 +754,18 @@
       catch (err) { $('#codeErr').textContent = err.message && err.message.length > 12 ? err.message : 'Hmm, that code didn’t work. Check that you copied all of it.'; Sound.undo(); }
     });
 
+    // the paper doll window works like its own page: Back (or the phone's back gesture) returns to the studio
+    const closeDoll = () => { if (!$('#dollModal').hidden) closeModal($('#dollModal')); };
+    window.addEventListener('hashchange', () => { if (location.hash !== '#doll') closeDoll(); });
+    $('#dollModal').addEventListener('click', e => {
+      if (e.target === $('#dollModal') || e.target.closest('[data-dollback]')) {
+        if (location.hash === '#doll') window.history.back(); else closeDoll();
+        setTimeout(closeDoll, 300);
+        return;
+      }
+      const m = e.target.closest('[data-dollmode]'); if (m) return openDoll(m.dataset.dollmode === 'coloring');
+      const a = e.target.closest('[data-dollact]'); if (a) return dollAction(a.dataset.dollact);
+    });
     $('#challengeBtn').addEventListener('click', openChallengePicker);
     $('#challengeDone').addEventListener('click', judgeNow);
     $('#challengeNew').addEventListener('click', openChallengePicker);
@@ -724,7 +777,7 @@
     });
     $('#closet').addEventListener('click', e => { if (e.target === $('#closet') || e.target.closest('[data-close]')) closeModal($('#closet')); });
     document.addEventListener('keydown', e => {
-      if (e.key === 'Escape') document.querySelectorAll('.modal:not([hidden])').forEach(closeModal);
+      if (e.key === 'Escape') { if (!$('#dollModal').hidden && location.hash === '#doll') window.history.back(); document.querySelectorAll('.modal:not([hidden])').forEach(closeModal); }
       if (e.target.matches('input')) return;
       if ($('#app').hidden) return;
       if (e.key === 'r' || e.key === 'R') $('#surprise').click();
@@ -745,6 +798,7 @@
     if (m) {
       try { startStudio(); loadCode('TT1-' + m[1].replace(/^TT1-/, '')); } catch (e) { }
     } else if (location.hash === '#studio') startStudio();
+    else if (location.hash === '#doll') { try { window.history.replaceState(null, '', location.pathname + location.search); } catch (e) { } }
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
   TT.app = { get state() { return state; }, set state(v) { state = sanitize(v); commit({ force: true, tabs: true }); }, randomLook, sanitize, judgeNow, setChallenge };

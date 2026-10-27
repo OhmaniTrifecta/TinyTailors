@@ -17,9 +17,9 @@
     A('bat', 'Batty', { tall: 1, fur: '#8a7aa6', alt: '#d6cbe8', inner: '#ffb3c4', ears: 'bat', muzzle: 'small', tail: 'none', locked: 240 })
   );
 
-  // free critters added later go at the end of the list so old share codes keep working
+  // critters added later go at the end of the list so old share codes keep working
   TT.ANIMALS.push(
-    A('cockatiel', 'Cockatiel', { tall: 1, fur: '#fff0a8', alt: '#fff9dc', ears: 'crest', marks: ['cockatiel'], muzzle: 'smallbeak', tail: 'longbird', foot: '#f2b6a8', mouthY: 218 })
+    A('cockatiel', 'Cockatiel', { tall: 1, fur: '#fff0a8', alt: '#fff9dc', ears: 'crest', marks: ['cockatiel'], muzzle: 'smallbeak', tail: 'longbird', foot: '#f2b6a8', mouthY: 218, locked: 225 })
   );
 
   /* ---------- tops ---------- */
