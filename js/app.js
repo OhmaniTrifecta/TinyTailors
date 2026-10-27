@@ -206,6 +206,7 @@
       if (g) { g.classList.add('pop'); setTimeout(() => g.classList.remove('pop'), 520); }
     }
     if (document.activeElement !== $('#name')) $('#name').value = state.name || '';
+    fitName();
     $('#undo').disabled = hIndex <= 0;
     $('#redo').disabled = hIndex >= history.length - 1;
     store.set('tinytailors.current', state);
@@ -260,6 +261,14 @@
   const NAME_C = ['', '', '', 'the Brave', 'McFluff', 'von Snuggles', 'the Great', 'Sparklepaws', 'the Third', 'Fuzzbottom'];
   const randomName = () => [pick(NAME_A), pick(NAME_B), pick(NAME_C)].filter(Boolean).join(' ').slice(0, 24);
 
+  /* the name tag grows with the name, and long names get a smaller font so the whole name shows */
+  function fitName() {
+    const el = $('#name'); const n = (el.value || el.placeholder || '').length;
+    el.style.width = Math.max(8, Math.min(26, n + 1)) + 'ch';
+    el.classList.toggle('long', n > 13 && n <= 18);
+    el.classList.toggle('longer', n > 18);
+  }
+
   /* ---------------- toast & celebrations ---------------- */
   let toastTimer;
   function toast(msg) {
@@ -275,7 +284,7 @@
 
   /* ---------------- modals ---------------- */
   let lastFocus = null;
-  function openModal(sel) { lastFocus = document.activeElement; const m = $(sel); m.hidden = false; const b = m.querySelector('[data-close]'); b && b.focus(); }
+  function openModal(sel) { lastFocus = document.activeElement; const m = $(sel); m.hidden = false; m.scrollTop = 0; const b = m.querySelector('[data-close]'); b && b.focus({ preventScroll: true }); }
   function closeModal(m) { m.hidden = true; lastFocus && lastFocus.focus && lastFocus.focus(); }
   function sheet(title, html, cls = '') {
     $('#sheetTitle').textContent = title;
@@ -605,7 +614,7 @@
     $('#undo').addEventListener('click', () => { if (hIndex > 0) { hIndex--; state = JSON.parse(history[hIndex]); Sound.undo(); renderStage(true); renderDrawer(); renderTabs(); } });
     $('#redo').addEventListener('click', () => { if (hIndex < history.length - 1) { hIndex++; state = JSON.parse(history[hIndex]); Sound.pop(); renderStage(true); renderDrawer(); renderTabs(); } });
 
-    $('#name').addEventListener('input', e => { state.name = e.target.value; store.set('tinytailors.current', state); });
+    $('#name').addEventListener('input', e => { state.name = e.target.value; fitName(); store.set('tinytailors.current', state); });
     $('#name').addEventListener('change', () => commit({ pop: false, drawer: false }));
     $('#nameDice').addEventListener('click', () => { state.name = randomName(); Sound.pop(); commit({ drawer: false }); });
 

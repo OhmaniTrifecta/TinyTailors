@@ -133,7 +133,9 @@ svg { display: block; }
   box-shadow: 0 3px 0 var(--ink); outline: 2px dashed var(--stitch); outline-offset: -7px;
 }
 .label-made { font-size: 12px; text-transform: uppercase; letter-spacing: .12em; font-weight: 800; color: var(--ink-soft); white-space: nowrap; }
-.label-tag input { border: 0; background: transparent; font: 800 21px/1.1 var(--display); width: 12ch; min-width: 0; color: var(--berry-deep); padding: 4px 2px; }
+.label-tag input { border: 0; background: transparent; font: 800 21px/1.1 var(--display); width: 12ch; max-width: 100%; min-width: 0; flex: 1 1 auto; color: var(--berry-deep); padding: 4px 2px; text-overflow: ellipsis; }
+.label-tag input.long { font-size: 17px; }
+.label-tag input.longer { font-size: 14.5px; }
 .label-tag input::placeholder { color: #d7b8c8; }
 .label-tag input:focus { outline: none; }
 .dice { background: var(--mint); border: 2.5px solid var(--ink); border-radius: 10px; padding: 4px; }
@@ -214,12 +216,14 @@ svg { display: block; }
 
 /* ---------- modals ---------- */
 .modal {
-  position: fixed; inset: 0; z-index: 20; background: rgba(91, 63, 88, .38); display: grid; place-items: center;
-  padding-block: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-bottom, 0px));
+  /* the overlay itself scrolls, and the card centers only when it fits, so nothing hides under the phone's toolbar */
+  position: fixed; inset: 0; z-index: 20; background: rgba(91, 63, 88, .38); display: flex; align-items: flex-start; justify-content: center;
+  overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+  padding-block: max(16px, env(safe-area-inset-top, 0px)) max(96px, calc(env(safe-area-inset-bottom, 0px) + 96px));
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
 }
 .modal-card {
-  width: min(760px, 100%); max-height: 100%; overflow: auto; background: var(--card); border: 3px solid var(--ink); border-radius: var(--r-lg);
+  width: min(760px, 100%); margin-block: auto; flex: none; background: var(--card); border: 3px solid var(--ink); border-radius: var(--r-lg);
   padding: 18px; box-shadow: 0 8px 0 var(--ink); outline: 2.5px dashed var(--stitch); outline-offset: -10px;
 }
 .modal-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
@@ -277,9 +281,20 @@ svg { display: block; }
   .chip span, .chip b { display: none; }
   .chip { padding: 7px 9px; }
   .stage { height: 34vh; }
-  .label-tag { padding: 4px 4px 4px 10px; }
+  .label-tag { padding: 4px 4px 4px 10px; align-self: stretch; }
   .label-made { font-size: 10px; }
   .label-tag input { font-size: 18px; }
+  .label-tag input.long { font-size: 15px; }
+  .label-tag input.longer { font-size: 13px; }
+  .unlock { grid-template-columns: 84px 1fr; justify-items: start; text-align: left; gap: 12px; }
+  .unlock-art { padding: 6px; border-radius: 16px; }
+  .unlock-art svg { width: 68px; height: 68px; }
+  .unlock-name { font-size: 22px; }
+  .unlock-price { justify-content: flex-start; margin: 6px 0 10px; }
+  .unlock .btn-big, .unlock .btn-soft { font-size: 16px; }
+  .unlock .modal-sub { margin: 0 0 10px; font-size: 15px; }
+  .modal-card { padding: 14px; }
+  .modal-head h2 { font-size: 24px; }
   .stage-actions { flex-wrap: nowrap; gap: 8px; }
   .btn-big { font-size: 18px; padding: 8px 16px 8px 8px; }
   .btn-soft { padding: 9px 12px; }
@@ -427,8 +442,6 @@ body.big .tab { width: 88px; }
 .pet-wrap.dragging { cursor: grabbing; }
 
 @media (max-width: 560px) {
-  .unlock { grid-template-columns: 1fr; justify-items: center; text-align: center; }
-  .unlock-price { justify-content: center; }
   .fab-layout { grid-template-columns: 1fr; }
   .wallet .spool-ic { display: inline-flex; }
   .bar-actions { gap: 4px; }
