@@ -1,0 +1,13 @@
+{
+  "name": "Tiny Tailors",
+  "short_name": "Tiny Tailors",
+  "description": "Dress up the cutest cartoon critters. App design by Sophia Pernal, 2026.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#fff1f5",
+  "theme_color": "#ffe9f0",
+  "icons": [
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}
