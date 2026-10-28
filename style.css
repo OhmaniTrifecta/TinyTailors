@@ -486,3 +486,50 @@ body.big .tab { width: 88px; }
 .back-btn { display: inline-flex; align-items: center; gap: 6px; font: 800 16px var(--body); color: var(--ink); background: var(--mint); border: 2.5px solid var(--ink); border-radius: 999px; padding: 6px 14px; box-shadow: 0 3px 0 var(--ink); }
 .back-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--ink); }
 .doll-card .modal-head { flex-wrap: wrap; justify-content: flex-start; gap: 12px; }
+
+/* ================= phones & tablets: the page scrolls, the critter stays pinned =================
+   Header, critter and drawer tabs stick to the top; the clothes scroll underneath in the normal page,
+   so whole rows of clothes are visible and scrolling feels native on iPhone. */
+.stage-row { display: contents; }
+.stage-wrap > .challenge { order: 0; }
+.stage { order: 1; }
+.label-tag { order: 2; }
+.stage-actions { order: 3; }
+@media (max-width: 900px) {
+  .app { height: auto; min-height: 100%; }
+  .studio { display: flex; flex-direction: column; align-items: stretch; gap: 10px; padding-block: 8px 24px; }
+  .stage-wrap { display: contents; }
+  .challenge { order: 0; }
+  .stage-row {
+    order: 1; position: sticky; top: var(--bar-h, 58px); z-index: 4;
+    display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center;
+    background: var(--paper); margin-inline: -16px; padding: 6px 16px 8px;
+    box-shadow: 0 8px 12px -10px rgba(91, 63, 88, .35);
+  }
+  .stage { height: min(34dvh, 300px); width: auto; max-width: 100%; justify-self: center; aspect-ratio: 400 / 460; max-height: none; border-width: 3px; }
+  .label-tag { order: 2; align-self: stretch; }
+  .wardrobe { order: 3; flex: none; display: block; min-height: 0; overflow: visible; }
+  .tabs { position: sticky; top: calc(var(--bar-h, 58px) + var(--row-h, 260px)); z-index: 3; border-radius: 25px 25px 0 0; }
+  .drawer { overflow: visible; }
+  .search { position: static; margin: -14px -16px 0; }
+  /* the action buttons become a little 2×2 rail beside the critter */
+  .stage-actions { display: grid; grid-template-columns: repeat(2, 64px); gap: 8px; flex-wrap: nowrap; }
+  .stage-actions .btn-big, .stage-actions .btn-soft {
+    flex-direction: column; justify-content: center; gap: 2px; width: 64px; height: 64px; padding: 4px; border-radius: 20px;
+    font: 800 10.5px/1.05 var(--body); text-align: center; box-shadow: 0 3px 0 var(--ink);
+  }
+  .stage-actions .btn-big .sew-btn { width: 26px; height: 26px; padding: 5px; gap: 3px; }
+  .stage-actions .btn-big .sew-btn i { width: 4px; height: 4px; }
+  .stage-actions svg { width: 24px; height: 24px; }
+  .stage-actions .txt { display: block !important; }
+}
+@media (max-width: 380px) {
+  .stage-actions { grid-template-columns: repeat(2, 56px); }
+  .stage-actions .btn-big, .stage-actions .btn-soft { width: 56px; height: 56px; font-size: 9.5px; }
+}
+
+@media (max-width: 900px) {
+  .toast { white-space: normal; text-align: center; width: max-content; max-width: 92%; font-size: 14px; line-height: 1.25; }
+  /* leave room at the bottom so even short drawers can scroll up under the pinned tabs */
+  .wardrobe { margin-bottom: 40vh; }
+}

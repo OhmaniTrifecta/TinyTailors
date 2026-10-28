@@ -579,7 +579,7 @@
   function startStudio() {
     Sound.wake(); Sound.whoosh();
     $('#title').hidden = true; $('#app').hidden = false;
-    renderTabs(); renderDrawer(); renderStage(true); renderCloset(); renderWallet();
+    renderTabs(); renderDrawer(); renderStage(true); renderCloset(); renderWallet(); measurePins();
     if (!store.get('tinytailors.welcomed', false)) {
       store.set('tinytailors.welcomed', true);
       setTimeout(() => toast(`You have ${PR.stitches} stitches to start. Save up for 🔒 goodies!`), 900);
@@ -604,6 +604,7 @@
       query = ''; $('#search').value = '';
       $('#tabs').querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', t.dataset.tab === activeTab));
       renderDrawer(); $('#drawer').scrollTop = 0;
+      if (window.innerWidth <= 900) { const w = document.querySelector('.wardrobe'); const pin = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--bar-h')) + parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--row-h')); const y = w.getBoundingClientRect().top + window.scrollY - pin; window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' }); }
     });
     $('#tabs').addEventListener('keydown', e => {
       if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
@@ -788,8 +789,18 @@
   function stopDanceIf() { if (danceTimer) stopDance(); }
   function selectText(el) { if (!el) return; const r = document.createRange(); r.selectNodeContents(el); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }
 
+  /* keep the pinned critter and the pinned drawer tabs stacked neatly on phones */
+  function measurePins() {
+    const bar = document.querySelector('.bar'), row = $('#stageRow');
+    if (bar) document.documentElement.style.setProperty('--bar-h', bar.offsetHeight + 'px');
+    if (row) document.documentElement.style.setProperty('--row-h', row.offsetHeight + 'px');
+  }
+
   /* ---------------- boot ---------------- */
   function boot() {
+    measurePins();
+    window.addEventListener('resize', measurePins);
+    if (window.ResizeObserver) { const ro = new ResizeObserver(measurePins); ro.observe(document.querySelector('.bar')); ro.observe($('#stageRow')); }
     applySettings();
     $('#looksCount').textContent = TT.bigWords(TT.countLooks());
     renderParade();
