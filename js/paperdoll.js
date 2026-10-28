@@ -155,7 +155,7 @@
       svg += `<svg x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" viewBox="${p.vb.map(v => v.toFixed(1)).join(' ')}">${p.body}</svg>`;
       svg += `<text class="pd-cap" x="${(x + w / 2).toFixed(1)}" y="${(y + h + 11).toFixed(1)}" text-anchor="middle">${esc(cap)}</text>`;
     });
-    svg += `<text x="${PAGE_W / 2}" y="${PAGE_H - M + 10}" text-anchor="middle" font-family="'Baloo 2', sans-serif" font-size="11" fill="#8a6f88">Made with Tiny Tailors · App design by Sophia Pernal · 2026</text>`;
+    svg += `<text x="${PAGE_W / 2}" y="${PAGE_H - M + 10}" text-anchor="middle" font-family="'Baloo 2', sans-serif" font-size="11" fill="#8a6f88">Made with Tiny Tailors · App design by Sophia and Sabrina Pernal · 2026</text>`;
     svg += '</svg>';
     return { svg, title };
   };

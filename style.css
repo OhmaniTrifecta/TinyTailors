@@ -564,3 +564,17 @@ body.big .tab { width: 88px; }
 .size-hint { display: none; position: absolute; right: 8px; bottom: 8px; z-index: 2; width: 34px; height: 34px; border-radius: 50%; border: 2.5px solid var(--ink);
   background: rgba(255, 253, 249, .92); box-shadow: 0 2px 0 var(--ink); padding: 0; }
 .size-hint svg { width: 18px; height: 18px; margin: auto; fill: none; stroke: var(--ink); stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+
+/* full-screen critter */
+.size-hint { display: grid; place-items: center; }
+.viewer { position: fixed; inset: 0; z-index: 35; display: flex; flex-direction: column; background: var(--paper);
+  padding-block: max(10px, env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-bottom, 0px));
+  padding-left: max(12px, env(safe-area-inset-left, 0px)); padding-right: max(12px, env(safe-area-inset-right, 0px)); }
+.viewer-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: space-between; padding-bottom: 10px; }
+.viewer-bar strong { font: 800 22px var(--display); color: var(--berry-deep); flex: 1; min-width: 0; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.viewer-tools { display: flex; gap: 6px; }
+.viewer-stage { flex: 1; min-height: 0; display: grid; place-items: center; }
+.viewer-stage svg { width: min(100%, calc((100dvh - 120px) * 0.8696)); height: auto; aspect-ratio: 400 / 460; border-radius: 28px; border: 3px solid var(--ink); background: #fff; box-shadow: var(--shadow); }
+body.viewing { overflow: hidden; }
+@supports not (height: 100dvh) { .viewer-stage svg { width: min(100%, calc((100vh - 120px) * 0.8696)); } }
+@media (max-width: 560px) { .viewer-tools .chip span { display: none; } .viewer-bar strong { font-size: 18px; } }

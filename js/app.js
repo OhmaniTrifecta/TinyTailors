@@ -201,6 +201,7 @@
   function renderStage(pop) {
     const look = Object.assign({}, state);
     $('#stage').innerHTML = TT.compose(look, { pfx: 'st-', pose: dancePose || undefined });
+    renderViewer();
     if (pop) {
       const g = $('#st-critter');
       if (g) { g.classList.add('pop'); setTimeout(() => g.classList.remove('pop'), 520); }
@@ -510,6 +511,31 @@
     toast(`Wearing ${state.name || 'a shared look'}!`);
   }
 
+  /* ---------------- full-screen critter ---------------- */
+  function renderViewer() {
+    if ($('#viewer').hidden) return;
+    $('#viewerSvg').innerHTML = TT.compose(state, { pfx: 'fs-', pose: dancePose || undefined });
+    $('#viewerName').textContent = state.name || '';
+  }
+  function openViewer() {
+    try { if (location.hash !== '#view') location.hash = 'view'; } catch (e) { }
+    $('#viewer').hidden = false;
+    document.body.classList.add('viewing');
+    renderViewer(); Sound.whoosh();
+    // real full screen where the browser allows it (computers, Android); iPhone uses the in-app view
+    const el = document.documentElement;
+    try { if (el.requestFullscreen && !document.fullscreenElement) el.requestFullscreen().catch(() => { }); } catch (e) { }
+    $('#viewer').querySelector('[data-viewback]').focus({ preventScroll: true });
+  }
+  function closeViewer() {
+    if ($('#viewer').hidden) return;
+    $('#viewer').hidden = true;
+    document.body.classList.remove('viewing');
+    try { if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => { }); } catch (e) { }
+    $('#sizeBtn').focus({ preventScroll: true });
+  }
+  function leaveViewer() { if (location.hash === '#view') window.history.back(); setTimeout(closeViewer, 250); }
+
   /* ---------------- paper doll & coloring page ---------------- */
   let dollPNG = null, dollColoring = false, dollJob = 0;
   async function openDoll(coloring) {
@@ -778,6 +804,7 @@
     });
     $('#closet').addEventListener('click', e => { if (e.target === $('#closet') || e.target.closest('[data-close]')) closeModal($('#closet')); });
     document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && !$('#viewer').hidden) { leaveViewer(); return; }
       if (e.key === 'Escape') { if (!$('#dollModal').hidden && location.hash === '#doll') window.history.back(); document.querySelectorAll('.modal:not([hidden])').forEach(closeModal); }
       if (e.target.matches('input')) return;
       if ($('#app').hidden) return;
@@ -785,16 +812,16 @@
       if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); (e.shiftKey ? $('#redo') : $('#undo')).click(); }
     });
     bindPetDrag();
-    // phones: shrink / grow the pinned critter (remembered on this device)
-    const applySize = small => {
-      $('#stageRow').classList.toggle('compact', small);
-      $('#sizeBtn').setAttribute('aria-pressed', small);
-      $('#sizeBtn').setAttribute('aria-label', small ? 'Make the critter bigger' : 'Make the critter smaller');
-      $('#sizeBtn').innerHTML = small ? '<svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>' : '<svg viewBox="0 0 24 24"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg>';
-      setTimeout(measurePins, 50);
-    };
-    applySize(!!store.get('tinytailors.smallStage', false));
-    $('#sizeBtn').addEventListener('click', () => { const small = !$('#stageRow').classList.contains('compact'); store.set('tinytailors.smallStage', small); applySize(small); Sound.tap(); });
+    // full-screen critter: corner button opens it; Back, Esc, or the phone's back gesture closes it
+    $('#sizeBtn').addEventListener('click', openViewer);
+    $('#viewer').addEventListener('click', e => {
+      if (e.target.closest('[data-viewback]')) return leaveViewer();
+      const a = e.target.closest('[data-viewact]');
+      if (a && a.dataset.viewact === 'dance') dance();
+      if (a && a.dataset.viewact === 'photo') $('#photo').click();
+    });
+    window.addEventListener('hashchange', () => { if (location.hash !== '#view') closeViewer(); });
+    document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement && !$('#viewer').hidden && location.hash === '#view') window.history.back(); });
   }
   function stopDanceIf() { if (danceTimer) stopDance(); }
   function selectText(el) { if (!el) return; const r = document.createRange(); r.selectNodeContents(el); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }
@@ -820,7 +847,7 @@
     if (m) {
       try { startStudio(); loadCode('TT1-' + m[1].replace(/^TT1-/, '')); } catch (e) { }
     } else if (location.hash === '#studio') startStudio();
-    else if (location.hash === '#doll') { try { window.history.replaceState(null, '', location.pathname + location.search); } catch (e) { } }
+    else if (location.hash === '#doll' || location.hash === '#view') { try { window.history.replaceState(null, '', location.pathname + location.search); } catch (e) { } }
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
   TT.app = { get state() { return state; }, set state(v) { state = sanitize(v); commit({ force: true, tabs: true }); }, randomLook, sanitize, judgeNow, setChallenge };

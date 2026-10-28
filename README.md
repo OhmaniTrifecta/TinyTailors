@@ -1,7 +1,7 @@
 # Tiny Tailors 🧵
 
 Dress up the cutest cartoon critters!
-**App design by Sophia Pernal · 2026**
+**App design by Sophia and Sabrina Pernal · 2026**
 
 Tiny Tailors is a dress-up web app for kids. You pick a critter, then mix and match clothes, colors, fabric patterns, pets, scenes and magic effects. All the art is drawn in code (SVG), so every outfit fits every critter.
 
