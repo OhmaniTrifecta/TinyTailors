@@ -604,7 +604,7 @@
       query = ''; $('#search').value = '';
       $('#tabs').querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', t.dataset.tab === activeTab));
       renderDrawer(); $('#drawer').scrollTop = 0;
-      if (window.innerWidth <= 900) { const w = document.querySelector('.wardrobe'); const pin = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--bar-h')) + parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--row-h')); const y = w.getBoundingClientRect().top + window.scrollY - pin; window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' }); }
+      if (window.innerWidth <= 900) { const w = document.querySelector('.wardrobe'); const pin = parseFloat(getComputedStyle(document.querySelector('.tabs')).top) || 0; const y = w.getBoundingClientRect().top + window.scrollY - pin; window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' }); }
     });
     $('#tabs').addEventListener('keydown', e => {
       if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
@@ -785,6 +785,16 @@
       if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); (e.shiftKey ? $('#redo') : $('#undo')).click(); }
     });
     bindPetDrag();
+    // phones: shrink / grow the pinned critter (remembered on this device)
+    const applySize = small => {
+      $('#stageRow').classList.toggle('compact', small);
+      $('#sizeBtn').setAttribute('aria-pressed', small);
+      $('#sizeBtn').setAttribute('aria-label', small ? 'Make the critter bigger' : 'Make the critter smaller');
+      $('#sizeBtn').innerHTML = small ? '<svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>' : '<svg viewBox="0 0 24 24"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg>';
+      setTimeout(measurePins, 50);
+    };
+    applySize(!!store.get('tinytailors.smallStage', false));
+    $('#sizeBtn').addEventListener('click', () => { const small = !$('#stageRow').classList.contains('compact'); store.set('tinytailors.smallStage', small); applySize(small); Sound.tap(); });
   }
   function stopDanceIf() { if (danceTimer) stopDance(); }
   function selectText(el) { if (!el) return; const r = document.createRange(); r.selectNodeContents(el); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }
@@ -800,6 +810,7 @@
   function boot() {
     measurePins();
     window.addEventListener('resize', measurePins);
+    if (window.visualViewport) window.visualViewport.addEventListener('resize', measurePins);
     if (window.ResizeObserver) { const ro = new ResizeObserver(measurePins); ro.observe(document.querySelector('.bar')); ro.observe($('#stageRow')); }
     applySettings();
     $('#looksCount').textContent = TT.bigWords(TT.countLooks());

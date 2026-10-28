@@ -533,3 +533,34 @@ body.big .tab { width: 88px; }
   /* leave room at the bottom so even short drawers can scroll up under the pinned tabs */
   .wardrobe { margin-bottom: 40vh; }
 }
+
+/* ================= phones v3: bigger critter, tabs always fully visible =================
+   The pinned pieces now account for the iPhone's notch / status-bar area (safe-area inset),
+   which is what was letting the drawer tabs slide halfway under the critter. */
+@media (max-width: 900px) {
+  :root { --safe-top: env(safe-area-inset-top, 0px); }
+  .stage-row { top: calc(var(--safe-top) + var(--bar-h, 58px)); grid-template-columns: minmax(0, 1fr) 58px; padding-block: 6px 8px; }
+  .tabs { top: calc(var(--safe-top) + var(--bar-h, 58px) + var(--row-h, 260px)); }
+  /* the critter fills the width next to a slim button column */
+  .stage { height: min(46dvh, calc((100vw - 32px - 68px) * 1.15), 520px); }
+  .stage-row.compact .stage { height: min(26dvh, 240px); }
+  .stage-actions { grid-template-columns: 58px; gap: 8px; align-content: center; }
+  .stage-actions .btn-big, .stage-actions .btn-soft { width: 58px; height: 58px; font-size: 10px; border-radius: 18px; }
+  /* tidier tabs and tiles so more clothes fit on screen */
+  .tabs { padding: 8px 10px 7px; gap: 5px; }
+  .tab { width: 62px; padding: 4px 2px 3px; font-size: 11.5px; border-radius: 14px; }
+  .tab svg { width: 30px; height: 30px; }
+  .items { grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 6px; }
+  .item { padding: 4px 3px 5px; font-size: 11.5px; border-radius: 14px; }
+  .item svg { max-width: 58px; }
+  .item span { min-height: 2.1em; }
+  .stage-row .size-hint { display: grid; }
+}
+@media (max-width: 380px) {
+  .stage-row { grid-template-columns: minmax(0, 1fr) 52px; }
+  .stage-actions { grid-template-columns: 52px; }
+  .stage-actions .btn-big, .stage-actions .btn-soft { width: 52px; height: 52px; font-size: 9px; }
+}
+.size-hint { display: none; position: absolute; right: 8px; bottom: 8px; z-index: 2; width: 34px; height: 34px; border-radius: 50%; border: 2.5px solid var(--ink);
+  background: rgba(255, 253, 249, .92); box-shadow: 0 2px 0 var(--ink); padding: 0; }
+.size-hint svg { width: 18px; height: 18px; margin: auto; fill: none; stroke: var(--ink); stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
