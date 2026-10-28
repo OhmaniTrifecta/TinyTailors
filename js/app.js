@@ -512,13 +512,17 @@
   }
 
   /* ---------------- full-screen critter ---------------- */
+  // only use the address-bar trick when the app is its own page (not inside a preview frame)
+  const canHash = (() => { try { return window.top === window; } catch (e) { return false; } })();
+  let viewHash = false; // true once the browser really moved to #view (so the phone's back gesture can close it)
   function renderViewer() {
     if ($('#viewer').hidden) return;
     $('#viewerSvg').innerHTML = TT.compose(state, { pfx: 'fs-', pose: dancePose || undefined });
     $('#viewerName').textContent = state.name || '';
   }
   function openViewer() {
-    try { if (location.hash !== '#view') location.hash = 'view'; } catch (e) { }
+    viewHash = false;
+    try { if (canHash && location.hash !== '#view') location.hash = 'view'; } catch (e) { }
     $('#viewer').hidden = false;
     document.body.classList.add('viewing');
     renderViewer(); Sound.whoosh();
@@ -534,13 +538,13 @@
     try { if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => { }); } catch (e) { }
     $('#sizeBtn').focus({ preventScroll: true });
   }
-  function leaveViewer() { if (location.hash === '#view') window.history.back(); setTimeout(closeViewer, 250); }
+  function leaveViewer() { const useBack = viewHash && location.hash === '#view'; closeViewer(); if (useBack) { viewHash = false; try { window.history.back(); } catch (e) { } } }
 
   /* ---------------- paper doll & coloring page ---------------- */
-  let dollPNG = null, dollColoring = false, dollJob = 0;
+  let dollPNG = null, dollColoring = false, dollJob = 0, dollHash = false;
   async function openDoll(coloring) {
     dollColoring = coloring;
-    if ($('#dollModal').hidden) { try { if (location.hash !== '#doll') location.hash = 'doll'; } catch (e) { } }
+    if ($('#dollModal').hidden) { dollHash = false; try { if (canHash && location.hash !== '#doll') location.hash = 'doll'; } catch (e) { } }
     openModal('#dollModal');
     window.scrollTo(0, 0);
     $('#dollModal').querySelectorAll('[data-dollmode]').forEach(b => b.setAttribute('aria-pressed', (b.dataset.dollmode === 'coloring') === coloring));
@@ -783,11 +787,15 @@
 
     // the paper doll window works like its own page: Back (or the phone's back gesture) returns to the studio
     const closeDoll = () => { if (!$('#dollModal').hidden) closeModal($('#dollModal')); };
-    window.addEventListener('hashchange', () => { if (location.hash !== '#doll') closeDoll(); });
+    window.addEventListener('hashchange', () => {
+      if (location.hash === '#doll') { if (!$('#dollModal').hidden) dollHash = true; return; }
+      if (dollHash) { dollHash = false; closeDoll(); }
+    });
     $('#dollModal').addEventListener('click', e => {
       if (e.target === $('#dollModal') || e.target.closest('[data-dollback]')) {
-        if (location.hash === '#doll') window.history.back(); else closeDoll();
-        setTimeout(closeDoll, 300);
+        const useBack = dollHash && location.hash === '#doll';
+        closeDoll();
+        if (useBack) { dollHash = false; try { window.history.back(); } catch (err) { } }
         return;
       }
       const m = e.target.closest('[data-dollmode]'); if (m) return openDoll(m.dataset.dollmode === 'coloring');
@@ -805,7 +813,7 @@
     $('#closet').addEventListener('click', e => { if (e.target === $('#closet') || e.target.closest('[data-close]')) closeModal($('#closet')); });
     document.addEventListener('keydown', e => {
       if (e.key === 'Escape' && !$('#viewer').hidden) { leaveViewer(); return; }
-      if (e.key === 'Escape') { if (!$('#dollModal').hidden && location.hash === '#doll') window.history.back(); document.querySelectorAll('.modal:not([hidden])').forEach(closeModal); }
+      if (e.key === 'Escape') { if (!$('#dollModal').hidden && dollHash && location.hash === '#doll') { dollHash = false; window.history.back(); } document.querySelectorAll('.modal:not([hidden])').forEach(closeModal); }
       if (e.target.matches('input')) return;
       if ($('#app').hidden) return;
       if (e.key === 'r' || e.key === 'R') $('#surprise').click();
@@ -820,8 +828,11 @@
       if (a && a.dataset.viewact === 'dance') dance();
       if (a && a.dataset.viewact === 'photo') $('#photo').click();
     });
-    window.addEventListener('hashchange', () => { if (location.hash !== '#view') closeViewer(); });
-    document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement && !$('#viewer').hidden && location.hash === '#view') window.history.back(); });
+    window.addEventListener('hashchange', () => {
+      if (location.hash === '#view') { if (!$('#viewer').hidden) viewHash = true; return; }
+      if (viewHash) { viewHash = false; closeViewer(); }
+    });
+    document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement && !$('#viewer').hidden) leaveViewer(); });
   }
   function stopDanceIf() { if (danceTimer) stopDance(); }
   function selectText(el) { if (!el) return; const r = document.createRange(); r.selectNodeContents(el); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }
