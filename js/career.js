@@ -353,9 +353,13 @@
     const drawDye = () => {
       const box = $('#crDye');
       const e = st[tab];
-      if (!lvl('dye') || !e.id || !TT.SLOTS[tab].palette || (TT.itemOf(tab, e.id) || {}).fixed) { box.hidden = true; return; }
+      // without the Dye station, a customer with a favorite-color wish still lets you dye in that color
+      const wish = cu.twists.find(t => t.type === 'color');
+      const wishCols = wish ? cols.filter(x => TT.colorFamily(x.hex) === wish.fam) : [];
+      const dyeCols = lvl('dye') ? cols : wishCols;
+      if (!dyeCols.length || !e.id || !TT.SLOTS[tab].palette || (TT.itemOf(tab, e.id) || {}).fixed) { box.hidden = true; return; }
       box.hidden = false;
-      box.innerHTML = `<span>🎨 Dye:</span>` + cols.map(cc => `<button class="swatch" type="button" data-dye="${cc.id}" style="background:${cc.hex}" aria-label="${cc.name}" aria-pressed="${e.color === cc.id}"></button>`).join('');
+      box.innerHTML = `<span>🎨 ${lvl('dye') ? 'Dye' : `${esc(TT.COLOR_WORD[wish.fam])} dye`}:</span>` + dyeCols.map(cc => `<button class="swatch" type="button" data-dye="${cc.id}" style="background:${cc.hex}" aria-label="${cc.name}" aria-pressed="${e.color === cc.id}"></button>`).join('');
     };
     const react = (slot, id) => {
       const el = $('#crReact'); if (!el) return;
