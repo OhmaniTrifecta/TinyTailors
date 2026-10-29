@@ -71,6 +71,10 @@
     F('trophy3', 'Golden trophy', null, 'floor', 'royal hero', c => R(-22, -12, 44, 12, 3, '#b98a6d', 3) + R(-5, -34, 10, 22, 2, GOLD, 2.5) + P('M-28,-80 L28,-80 Q28,-36 0,-34 Q-28,-36 -28,-80Z', GOLD, 3) + S('M-28,-72 q-16,2 -12,18 M28,-72 q16,2 12,18', GOLD, 3.5) + TT.star(0, -58, 9, '#fff3a8', 2), [-42, -82, 84, 84], { gift: 1 })
   ];
   const furn = id => FURN.find(f => f.id === id);
+  // owned if bought, won on the lucky wheel, or a gift
+  const ownsF = f => (PR.house && PR.house.owned || []).includes(f.id) || f.price === 0 || PR.unlocked.includes('furn:' + f.id);
+  const furnBox = f => `${f.box[0] - 6} ${f.box[1] - 6} ${Math.max(f.box[2], f.box[3]) + 12} ${Math.max(f.box[2], f.box[3]) + 12}`;
+  const furnPreview = f => TT.svg(f.draw(PAINT[0]), furnBox(f));
   const CR_S = 0.3; // critters in the house are drawn at this size
 
   const WALLS = [
@@ -98,6 +102,7 @@
     h.owned = h.owned || FURN.filter(f => f.price === 0).map(f => f.id);
     h.rooms = h.rooms || {};
     h.open = h.open || ROOMS.filter(r => !r.price).map(r => r.id);
+    ROOMS.forEach(r => { if (r.price && !h.open.includes(r.id) && PR.unlocked.includes('room:' + r.id)) h.open.push(r.id); });
     ROOMS.forEach(r => { if (h.open.includes(r.id) && !h.rooms[r.id]) h.rooms[r.id] = { wall: r.wall, pat: 'plain', floor: r.floor, items: r.start.map(([f, x, y]) => ({ f, x, y, s: 1, flip: 0, c: 0 })), critters: [] }; });
     h.cur = h.cur && h.rooms[h.cur] ? h.cur : 'bedroom';
     return h;
@@ -159,6 +164,7 @@
     r.critters.forEach((cr, i) => { s += critterSVG(cr, i, sel && sel.k === 'c' && sel.i === i, pfx); });
     return s;
   }
+  TT.houseRoomPreview = def => TT.svg(wallSVG({ wall: def.wall, pat: 'plain', floor: def.floor }, def), '0 0 400 300');
   TT.houseRoomSVG = room => TT.svg(roomSVG(room, null, 'hp-'), '0 0 400 300');
 
   /* ---------------- the house screen ---------------- */
@@ -196,9 +202,9 @@
     shell.body().querySelectorAll('[data-hp]').forEach(b => b.setAttribute('aria-pressed', b.dataset.hp === panel));
     const box = shell.body().querySelector('#hoPanel');
     if (panel === 'furniture') {
-      const list = FURN.filter(f => !f.gift || h.owned.includes(f.id)).filter(f => !f.event || h.owned.includes(f.id) || TT.eventOpen(f.event));
-      box.innerHTML = `<div class="ho-grid">${list.map(f => { const own = h.owned.includes(f.id); return `<button class="ho-f${own ? '' : ' shop'}" type="button" data-hf="${f.id}" aria-label="${esc(f.name)}${own ? '' : `, ${f.price} stitches`}">
-        ${TT.svg(f.draw(PAINT[0]), `${f.box[0] - 6} ${f.box[1] - 6} ${Math.max(f.box[2], f.box[3]) + 12} ${Math.max(f.box[2], f.box[3]) + 12}`)}<span>${esc(f.name)}</span>${own ? '' : `<em class="price r-${TT.rarity(f.price).id}">${TT.SPOOL}${f.price}</em>`}${f.event ? `<i class="ev-badge">${TT.eventById(f.event).emoji}</i>` : ''}</button>`; }).join('')}</div>`;
+      const list = FURN.filter(f => !f.gift || ownsF(f)).filter(f => !f.event || ownsF(f) || TT.eventOpen(f.event));
+      box.innerHTML = `<div class="ho-grid">${list.map(f => { const own = ownsF(f); return `<button class="ho-f${own ? '' : ' shop'}" type="button" data-hf="${f.id}" aria-label="${esc(f.name)}${own ? '' : `, ${f.price} stitches`}">
+        ${TT.svg(f.draw(PAINT[0]), furnBox(f))}<span>${esc(f.name)}</span>${own ? '' : `<em class="price r-${TT.rarity(f.price).id}">${TT.SPOOL}${f.price}</em>`}${f.event ? `<i class="ev-badge">${TT.eventById(f.event).emoji}</i>` : ''}</button>`; }).join('')}</div>`;
     } else if (panel === 'walls') {
       box.innerHTML = `<div class="row-label">Wallpaper</div><div class="swatches">${WALLS.map(w => `<button class="swatch" type="button" data-hw="${w.id}" style="background:${w.col}" aria-label="${esc(w.name)}" aria-pressed="${r.wall === w.id}"></button>`).join('')}</div>
         <div class="row-label">Pattern</div><div class="ho-pats">${WALL_PATS.map(p => `<button class="mini" type="button" data-hpat="${p}" aria-pressed="${r.pat === p}">${p[0].toUpperCase() + p.slice(1)}</button>`).join('')}</div>
@@ -217,8 +223,14 @@
       const h = H(), id = x.dataset.room, def = ROOMS.find(r => r.id === id);
       if (!h.open.includes(id)) {
         if (PR.stitches < def.price) { msg(`The ${def.name.toLowerCase()} costs ${def.price} stitches. You need ${def.price - PR.stitches} more.`); SND().undo(); return; }
-        if (!window.confirm(`Unlock the ${def.name.toLowerCase()} for ${def.price} stitches?`)) return;
-        PR.stitches -= def.price; h.open.push(id); save(); H(); shell.wallet(); SND().cheer(); TT.albumPing && TT.albumPing();
+        // rooms unlock with the same unlock window (and lucky wheel) as the wardrobe
+        const obj = { id, name: def.name, locked: def.price };
+        if (TT.isLocked('room', obj)) {
+          const open = () => { if (!h.open.includes(id)) h.open.push(id); h.cur = id; sel = null; save(); H(); SND().cheer(); TT.albumPing && TT.albumPing(); };
+          TT.app.askUnlock('room', obj, () => { open(); draw(); }, TT.houseRoomPreview(def), { wearLabel: 'Go to the room!', onClose: () => { if (!TT.isLocked('room', obj)) open(); draw(); } });
+          return;
+        }
+        h.open.push(id); save(); H(); TT.albumPing && TT.albumPing();
       }
       h.cur = id; sel = null; save(); SND().tap(); draw();
     }));
@@ -228,16 +240,22 @@
       const fb = e.target.closest('[data-hf]');
       if (fb) {
         const f = furn(fb.dataset.hf);
-        if (!h.owned.includes(f.id)) {
-          if (PR.stitches < f.price) { msg(`${f.name} costs ${f.price} stitches. You need ${f.price - PR.stitches} more.`); SND().undo(); return; }
-          if (!window.confirm(`Buy the ${f.name.toLowerCase()} for ${f.price} stitches? You can put it in any room, as many times as you like.`)) return;
-          PR.stitches -= f.price; h.owned.push(f.id); shell.wallet(); SND().sparkle();
+        if (!ownsF(f)) {
+          // same unlock window (and lucky wheel for Rare things, 80+) as the wardrobe
+          const obj = { id: f.id, name: f.name, locked: f.price };
+          TT.app.askUnlock('furn', obj, () => { place(f); }, furnPreview(f), { wearLabel: 'Put it in the room!', onClose: () => { draw(); } });
+          return;
         }
-        if (r.items.length >= 30) { msg('This room is full! Put something away first.'); return; }
+        place(f);
+        return;
+      }
+      function place(f) {
+        const h = H(), r = h.rooms[h.cur];
+        if (!h.owned.includes(f.id)) h.owned.push(f.id);
+        if (r.items.length >= 30) { draw(); msg('This room is full! Put something away first.'); return; }
         const y = f.layer === 'wall' ? 90 + Math.random() * 30 : f.layer === 'rug' ? 250 + Math.random() * 20 : 230 + Math.random() * 50;
         r.items.push({ f: f.id, x: Math.round(80 + Math.random() * 240), y: Math.round(y), s: 1, flip: 0, c: 0 });
-        sel = { k: 'f', i: r.items.length - 1 }; save(); SND().pop(); redrawRoom(); drawPanel(); msg(`Drag the ${f.name.toLowerCase()} where you want it.`); TT.albumPing && TT.albumPing();
-        return;
+        sel = { k: 'f', i: r.items.length - 1 }; save(); SND().pop(); draw(); msg(`Drag the ${f.name.toLowerCase()} where you want it.`); TT.albumPing && TT.albumPing();
       }
       const w = e.target.closest('[data-hw]'); if (w) { r.wall = w.dataset.hw; save(); SND().swatch(); redrawRoom(); drawPanel(); TT.albumPing && TT.albumPing(); return; }
       const pt = e.target.closest('[data-hpat]'); if (pt) { r.pat = pt.dataset.hpat; save(); SND().swatch(); redrawRoom(); drawPanel(); return; }

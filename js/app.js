@@ -289,8 +289,10 @@
   /* ---------------- modals ---------------- */
   let lastFocus = null;
   function openModal(sel) { lastFocus = document.activeElement; const m = $(sel); m.hidden = false; m.scrollTop = 0; const b = m.querySelector('[data-close]'); b && b.focus({ preventScroll: true }); }
-  function closeModal(m) { m.hidden = true; lastFocus && lastFocus.focus && lastFocus.focus(); }
+  let sheetClosed = null; // a Town page can ask to hear when the unlock window closes
+  function closeModal(m) { m.hidden = true; lastFocus && lastFocus.focus && lastFocus.focus(); if (m.id === 'sheet' && sheetClosed) { const f = sheetClosed; sheetClosed = null; f(); } }
   function sheet(title, html, cls = '') {
+    $('#sheet').classList.toggle('over-game', !!document.querySelector('.game')); // show on top of the Town or games window
     $('#sheetTitle').textContent = title;
     $('#sheetBody').innerHTML = html;
     $('#sheet').querySelector('.modal-card').className = 'modal-card ' + cls;
@@ -299,7 +301,7 @@
 
   /* ---------------- unlocking ---------------- */
   let pendingUnlock = null;
-  function askUnlock(kind, obj, apply, preview) {
+  function askUnlock(kind, obj, apply, preview, opts = {}) {
     if (obj.event && !TT.eventOpen(obj.event)) {
       const ev = TT.eventById(obj.event);
       pendingUnlock = null;
@@ -309,14 +311,14 @@
         <button class="btn-soft" type="button" data-gotown>See this month's event</button></div></div>`, 'unlock-card');
       return;
     }
-    pendingUnlock = { kind, obj, apply, preview };
+    pendingUnlock = { kind, obj, apply, preview, wearLabel: opts.wearLabel };
     const can = PR.stitches >= obj.locked;
     sheet('Unlock it?', `<div class="unlock">
       <div class="unlock-art">${preview || ''}</div>
       <div><span class="rarity r-${TT.rarity(obj.locked).id}">${TT.rarity(obj.locked).name}</span><p class="unlock-name">${esc(obj.name)}</p>
       <p class="unlock-price">${priceTag(obj.locked)} <span>You have ${PR.stitches}</span></p>
       ${can ? `<button class="btn-big" type="button" data-unlock>Unlock for ${obj.locked} stitches</button>`
-        : `<p class="modal-sub">You need ${obj.locked - PR.stitches} more stitches. Save up by doing style challenges (the daily one pays double!), games, fashion shows and photos. ${obj.locked - PR.stitches > 90 ? 'Special things take a few days to save for!' : ''}</p><button class="btn-soft" type="button" data-gochallenge>Do a challenge</button>`}
+        : `<p class="modal-sub">You need ${obj.locked - PR.stitches} more stitches. Save up by doing style challenges (the daily one pays double!), games, fashion shows and photos. ${obj.locked - PR.stitches > 90 ? 'Special things take a few days to save for!' : ''}</p>${document.querySelector('.game') ? '' : '<button class="btn-soft" type="button" data-gochallenge>Do a challenge</button>'}`}
       </div></div>
       ${obj.event ? `<p class="modal-sub ev-note">${TT.eventById(obj.event).emoji} Event item: only until the end of ${TT.MONTHS[TT.eventById(obj.event).month]}. Or win it free in an event challenge!</p>` : ''}
       ${TT.canWheel(obj) ? `<div class="spin-offer">${WHEEL_ICON}<div><b>Feeling lucky?</b> Spin the wheel for ${TT.spinCost(obj)} stitches. If it lands on ${esc(obj.name)}, it's yours! <span>(1 in 10 chance, plus spaces that give stitches back or a free spin)</span></div>
@@ -382,7 +384,7 @@
   function wheelButtons(won) {
     const box = $('#wheelActions'); if (!box || !pendingUnlock) return;
     const { obj } = pendingUnlock;
-    if (won) { box.innerHTML = `<button class="btn-big" type="button" data-wear>Wear it!</button>`; return; }
+    if (won) { box.innerHTML = `<button class="btn-big" type="button" data-wear>${esc(pendingUnlock.wearLabel || 'Wear it!')}</button>`; return; }
     const cost = TT.spinCost(obj), free = TT.freeSpins() > 0, canSpin = free || PR.stitches >= cost;
     box.innerHTML = `<button class="btn-big" type="button" data-spinnow ${canSpin ? '' : 'disabled'}>${free ? 'Free spin!' : wheelAngle ? 'Spin again' : 'Spin!'} <span class="price r-common">${free ? '★ free' : SPOOL + cost}</span></button>
       <p class="wheel-bal">You have <b>${PR.stitches}</b> stitches${free ? ` and <b>${TT.freeSpins()}</b> free spin${TT.freeSpins() > 1 ? 's' : ''}` : canSpin ? '' : ` · you need ${cost - PR.stitches} more to spin`}</p>
@@ -1213,5 +1215,7 @@
     else if (location.hash === '#doll' || location.hash === '#view') { try { window.history.replaceState(null, '', location.pathname + location.search); } catch (e) { } }
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
-  TT.app = { get state() { return state; }, set state(v) { state = sanitize(v); commit({ force: true, tabs: true }); }, randomLook, sanitize, judgeNow, setChallenge, openTown, wearItem };
+  TT.app = { get state() { return state; }, set state(v) { state = sanitize(v); commit({ force: true, tabs: true }); }, randomLook, sanitize, judgeNow, setChallenge, openTown, wearItem,
+    // the same unlock window (and lucky wheel) the wardrobe uses, for Town things like furniture and rooms
+    askUnlock(kind, obj, apply, preview, opts = {}) { sheetClosed = opts.onClose || null; askUnlock(kind, obj, apply, preview, opts); } };
 })(window.TT);
