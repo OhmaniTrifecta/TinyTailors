@@ -122,6 +122,9 @@
     .filter(ch => ch.rules.some(r => r.type === 'tags'));
   const FAM_LIST = ['pink', 'red', 'orange', 'yellow', 'green', 'blue', 'purple', 'white'];
   const COL_OF_FAM = { pink: 'bubblegum', red: 'strawberry', orange: 'peach', yellow: 'butter', green: 'mint', blue: 'sky', purple: 'lavender', white: 'cloud', brown: 'cocoa', gray: 'cloud', dark: 'night' };
+  // only ask for a color the shop's swatches can actually make (e.g. there is no gray swatch)
+  const famsNow = () => new Set(TT.COLORS.filter(x => !x.locked).map(x => TT.colorFamily(x.hex)));
+  const wearableFam = f => famsNow().has(f) ? f : pick(FAM_LIST.filter(x => famsNow().has(x)));
   const lower = s => s.charAt(0).toLowerCase() + s.slice(1);
 
   function baseLook(animal, fur, eyes, name) {
@@ -161,7 +164,7 @@
       const other = pick(ps.filter(x => x.id !== ch.id));
       ch = { id: ch.id + '+' + other.id, text: `${ch.text}, and ${lower(other.text)}`, rules: ch.rules.concat(other.rules.filter(x => x.type === 'tags')) };
     }
-    if (r >= 1 && Math.random() < 0.35) twists.push({ type: 'color', fam: op.color });
+    if (r >= 1 && Math.random() < 0.35) twists.push({ type: 'color', fam: wearableFam(op.color) });
     const noSlots = slotsNow().filter(s => !['top', 'bottom', 'shoes'].includes(s));
     if (r >= 2 && noSlots.length && Math.random() < 0.3) twists.push({ type: 'no', slot: pick(noSlots) });
     if (r >= 3 && Math.random() < 0.3) twists.push({ type: 'rush' });
@@ -308,6 +311,17 @@
       const fits = shuffle(items.filter(i => tagsOf(s, i.id).some(t => goodTags.has(t)))).slice(0, Math.min(3, Math.ceil(per / 3)));
       const rest = shuffle(items.filter(i => !fits.includes(i))).slice(0, per - fits.length);
       opts[s] = shuffle(fits.concat(rest)).map(i => ({ id: i.id, color: pick(cols).id }));
+    });
+    // a "favorite color" wish: make sure a few offered pieces already come in that color (needed before the dye station)
+    cu.twists.filter(t => t.type === 'color').forEach(t => {
+      const famCols = cols.filter(x => TT.colorFamily(x.hex) === t.fam);
+      if (!famCols.length) return;
+      const dyeable = s => TT.SLOTS[s].palette && opts[s].some(o => !(TT.itemOf(s, o.id) || {}).fixed);
+      const sl = ['top', 'bottom', 'shoes', 'hat', 'neck', 'back', 'face', 'hold'].filter(s => opts[s] && dyeable(s));
+      sl.slice(0, 4).forEach(s => {
+        const can = opts[s].filter(o => !(TT.itemOf(s, o.id) || {}).fixed);
+        shuffle(can).slice(0, 2).forEach(o => { o.color = pick(famCols).id; });
+      });
     });
     const rushT = cu.twists.find(t => t.type === 'rush');
     const TIME = rushT ? 45 + (lvl('machine') ? 15 : 0) : 0;

@@ -86,7 +86,7 @@
     if (d) { h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h *= 60; if (h < 0) h += 360; }
     if (s < 0.18 || d < 0.08) return l > 0.82 ? 'white' : l < 0.42 ? 'dark' : 'gray';
     if (l < 0.3) return 'dark';
-    if ((h < 18 || h >= 335)) return l > 0.7 ? 'pink' : 'red';
+    if ((h < 18 || h >= 335)) return l > 0.75 ? 'pink' : 'red';
     if (h < 45) return (l < 0.58 && s < 0.6) ? 'brown' : 'orange';
     if (h < 68) return 'yellow';
     if (h < 165) return 'green';
