@@ -864,7 +864,7 @@
       if (e.key === 'Escape' && !$('#viewer').hidden) { leaveViewer(); return; }
       if (e.key === 'Escape') { if (!$('#dollModal').hidden && dollHash && location.hash === '#doll') { dollHash = false; window.history.back(); } document.querySelectorAll('.modal:not([hidden])').forEach(closeModal); }
       // shortcuts only for the dress-up screen: never while typing, or while a window is open
-      if (e.target.closest('input, textarea, select, [contenteditable]')) return;
+      if (e.target.closest && e.target.closest('input, textarea, select, [contenteditable]')) return;
       if (document.querySelector('.modal:not([hidden]), .game, .runway') || !$('#viewer').hidden) return;
       if ($('#app').hidden) return;
       if (e.key === 'r' || e.key === 'R') $('#surprise').click();

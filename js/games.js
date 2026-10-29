@@ -343,13 +343,27 @@
       <p class="rh-help">Tap a pose when its star reaches the line. Keys: ← ↓ ↑ → or D F J K</p></div>`;
     const crit = $('#rhCritter'), word = $('#rhWord'), combo = $('#rhCombo');
     let score = 0, streak = 0, bestStreak = 0, hits = 0, perfects = 0, poseTimer = 0, cur = 'stand';
-    const t0 = performance.now() + LEAD;
-    const timeOf = nt => t0 + nt.b * BEAT;
-    later(() => Sound.startMusic(), LEAD);
+    // the song is built from the chart: a drum on every beat, and a lane's own note exactly when each star lands,
+    // all scheduled on the audio clock so the stars and the music can't drift apart
+    const LANE_NOTE = [523, 659, 784, 1047];
+    const BASS = [131, 131, 175, 175, 147, 147, 196, 196];
+    const ev = [];
+    for (let k = -4; k < 0; k++) ev.push({ t: k * BEAT / 1000, f: k === -1 ? 1568 : 1175, d: 0.06, type: 'square', v: 0.05 });
+    const lastBeat = notes[notes.length - 1].b + 2;
+    for (let b = 0; b <= lastBeat; b++) {
+      const t = b * BEAT / 1000;
+      ev.push({ t, f: 150, d: 0.16, type: 'sine', v: 0.35, slide: 0.35 });
+      ev.push({ t: t + BEAT / 2000, f: 2400, d: 0.03, type: 'square', v: 0.018 });
+      if (b % 2 === 0) ev.push({ t, f: BASS[(b / 2) % BASS.length], d: 0.3, type: 'sine', v: 0.12 });
+    }
+    notes.forEach(nt => ev.push({ t: nt.b * BEAT / 1000, f: LANE_NOTE[nt.lane], d: 0.2, type: 'triangle', v: 0.13 }));
+    const song = Sound.playSong(ev, LEAD / 1000);
+    const clock = () => song.clockMs();
+    const timeOf = nt => nt.b * BEAT;
     const setPose = p => { if (cur !== p) { cur = p; crit.innerHTML = frames[p]; } };
     const say = (txt, col) => { word.textContent = txt; word.setAttribute('fill', col); word.animate([{ transform: 'scale(1.25)', transformOrigin: '300px 60px' }, { transform: 'scale(1)', transformOrigin: '300px 60px' }], { duration: 220 }); };
     function hit(lane) {
-      const now = performance.now();
+      const now = clock();
       const pad = root.querySelector(`.rh-pad[data-lane="${lane}"]`); if (pad) { pad.classList.remove('hit'); void pad.offsetWidth; pad.classList.add('hit'); }
       let best = null, bd = 1e9;
       notes.forEach(nt => { if (nt.state || nt.lane !== lane) return; const d = Math.abs(now - timeOf(nt)); if (d < bd) { bd = d; best = nt; } });
@@ -360,7 +374,7 @@
       score += (perfect ? 100 : 60) + Math.min(50, streak * 2);
       say(perfect ? 'Perfect!' : 'Good!', perfect ? '#ffe17a' : '#9ee6c0');
       combo.textContent = streak > 2 ? `${streak} in a row!` : '';
-      Sound.tone([784, 988, 1175, 1319][lane], 0.12, 'triangle', 0.12);
+      Sound.tone(1900, 0.04, 'square', 0.03);
       $('#rhScore').textContent = score;
       $('#rhFlash').innerHTML = `<circle cx="${120 + Math.random() * 360}" cy="${290 + Math.random() * 20}" r="22" fill="#fff" opacity=".85" class="flash"/>`;
     }
@@ -368,8 +382,9 @@
     keyHandler = e => { if (e.repeat) return; const i = LANES.findIndex(l => l.keys.includes(e.key)); if (i >= 0) { e.preventDefault(); hit(i); } };
     cleanup.push(() => clearTimeout(poseTimer));
     const els = notes.map((nt, k) => root.querySelector('#rhN' + k));
-    const endAt = t0 + notes[notes.length - 1].b * BEAT + 900;
-    loop(now => {
+    const endAt = notes[notes.length - 1].b * BEAT + 900;
+    loop(() => {
+      const now = clock();
       notes.forEach((nt, k) => {
         const dt = timeOf(nt) - now;
         if (!nt.state && dt < -WIN) { nt.state = 2; streak = 0; combo.textContent = ''; say('Miss', '#ffb3c8'); }

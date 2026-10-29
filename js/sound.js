@@ -53,7 +53,42 @@
         i++;
       }, 180);
     },
-    stopMusic() { if (this.music) clearInterval(this.music); this.music = null; },
+    stopMusic() { if (this.music) clearInterval(this.music); this.music = null; if (this.song) { this.song.stop(); this.song = null; } },
+    /* A whole song scheduled on the audio clock, so it never drifts from a game's notes.
+       events: [{ t: seconds from start, f: freq, d: duration, type, v: volume, slide }]
+       Returns { start (audio-clock seconds), clockMs() → ms since the song started, as heard, stop() }. */
+    song: null,
+    playSong(events, leadSec) {
+      this.stopMusic(); this.wake();
+      const fallback0 = performance.now() + leadSec * 1000;
+      if (!ctx) {
+        const s = { clockMs: () => performance.now() - fallback0, stop() { } };
+        this.song = s; return s;
+      }
+      const bus = ctx.createGain(); bus.gain.value = this.on ? 1 : 0; bus.connect(ctx.destination);
+      const start = ctx.currentTime + leadSec;
+      // what we hear lags what we schedule by the device's output latency (bigger on Bluetooth)
+      const lat = (ctx.outputLatency || ctx.baseLatency || 0) * 1000;
+      events.forEach(e => {
+        const t = start + e.t;
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.type = e.type || 'triangle';
+        o.frequency.setValueAtTime(e.f, t);
+        if (e.slide) o.frequency.exponentialRampToValueAtTime(e.f * e.slide, t + e.d);
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(e.v || 0.1, t + 0.01);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + e.d);
+        o.connect(g).connect(bus);
+        o.start(t); o.stop(t + e.d + 0.03);
+      });
+      const s = {
+        // if the browser hasn't let audio start yet, keep time with the regular clock so the game never freezes
+        clockMs: () => ctx.state === 'running' ? (ctx.currentTime - start) * 1000 - lat : performance.now() - fallback0,
+        stop: () => { try { bus.gain.cancelScheduledValues(ctx.currentTime); bus.gain.setValueAtTime(0, ctx.currentTime); bus.disconnect(); } catch (e) { } }
+      };
+      this.song = s;
+      return s;
+    },
     say(text) {
       try {
         if (!('speechSynthesis' in window)) return;
