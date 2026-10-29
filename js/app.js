@@ -448,8 +448,34 @@
     challenge = { ch, daily };
     $('#challengeText').textContent = ch.text;
     $('#challengeLabel').innerHTML = ch.prize ? `${TT.currentEvent().emoji} Event challenge` : daily ? `Daily challenge${PR.streak ? ` · <span class="streak">🔥 ${PR.streak}-day streak</span>` : ''}${TT.dailyDone() ? ' · done today ✓' : ''}` : 'Style challenge';
+    const hint = $('#challengeHint');
+    if (hint) {
+      let h = 'Dress up to match, then tap <b>Judge my look!</b>';
+      if (ch.prize) {
+        const it = TT.itemOf(ch.prize[0], ch.prize[1]), won = TT.eventState(TT.currentEvent().id).prizes.includes(ch.id);
+        if (it) h = won ? `You already won the ${esc(it.name)} ✓ Play again for stitches!` : `Dress up to match, then tap <b>Judge my look!</b> Get 4 stars to win the <b>${esc(it.name)}</b> 🎁`;
+      }
+      hint.innerHTML = h;
+    }
     $('#challenge').hidden = false;
     $('#challenge').classList.toggle('daily', !!daily);
+    $('#challenge').classList.toggle('ev', !!ch.prize);
+    $('#challenge').style.setProperty('--ev-bg', ch.prize ? TT.currentEvent().color : '');
+    if (ch.prize) { $('#challenge').classList.remove('pulse'); void $('#challenge').offsetWidth; $('#challenge').classList.add('pulse'); }
+  }
+  /* event challenges: a how-to card with the prize and tips, then back to the critter */
+  function startEventChallenge(ch) {
+    if (!ch) return;
+    setChallenge(ch, false);
+    const ev = TT.currentEvent(), it = TT.itemOf(ch.prize[0], ch.prize[1]);
+    const won = TT.eventState(ev.id).prizes.includes(ch.id);
+    const tips = (ch.rules || []).map(r => r.tip).filter(Boolean);
+    sheet(`${ev.emoji} ${ch.text}`, `<div class="unlock"><div class="unlock-art">${it ? TT.eventThumb(ch.prize[0], it, state) : ''}</div>
+      <div><p class="modal-sub">${won ? `You already won the <b>${esc(it.name)}</b>. You can play again for stitches!` : `Prize: <b>${it ? esc(it.name) : 'an event item'}</b> 🎁 Get <b>4 stars</b> or more to win it free!`}</p></div></div>
+      <div class="row-label">How to win</div>
+      <ol class="ev-steps"><li>Dress your critter to match the challenge.</li><li>Tap <b>Judge my look!</b> at the top of the screen.</li><li>Get 4 stars or more!</li></ol>
+      ${tips.length ? `<div class="row-label">Judge's tips</div><ul class="ev-tips">${tips.map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}
+      <button class="btn-big" type="button" data-close>Let's dress up!</button>`, 'unlock-card');
   }
   function openChallengePicker() {
     const d = TT.dailyChallenge();
@@ -805,7 +831,7 @@
     stopDanceIf();
     TT.openTown({ look: () => clone(state), wallet: () => renderWallet(true), closet: () => closet.map(clone),
       saveLook: (look, done) => addToCloset(look, done),
-      startChallenge: ch => { setChallenge(ch, false); toast(`${TT.currentEvent().emoji} ${ch.text}`); },
+      startChallenge: ch => startEventChallenge(ch),
       wear: (slot, id) => wearItem(slot, id),
       onClose: () => { renderWallet(); renderDrawer(); renderTabs(); renderEventRibbon(); $('#townBtn').focus({ preventScroll: true }); } }, page);
   }
@@ -1105,7 +1131,7 @@
       if (t.closest('[data-gochallenge]')) { closeModal($('#sheet')); return openChallengePicker(); }
       if (t.closest('[data-pickdaily]')) { setChallenge(TT.dailyChallenge(), true); closeModal($('#sheet')); Sound.tap(); return; }
       const pk = t.closest('[data-pick]'); if (pk) { setChallenge(TT.CHALLENGES.find(c => c.id === pk.dataset.pick), false); closeModal($('#sheet')); Sound.tap(); return; }
-      const pe = t.closest('[data-pickev]'); if (pe) { setChallenge(TT.eventChallenges(TT.currentEvent().id).find(c => c.id === pe.dataset.pickev), false); closeModal($('#sheet')); Sound.tap(); return; }
+      const pe = t.closest('[data-pickev]'); if (pe) { const ch = TT.eventChallenges(TT.currentEvent().id).find(c => c.id === pe.dataset.pickev); closeModal($('#sheet')); Sound.tap(); return setTimeout(() => startEventChallenge(ch), 60); }
       const wp = t.closest('[data-wearprize]'); if (wp) { const [sl, id] = wp.dataset.wearprize.split(':'); closeModal($('#sheet')); return wearItem(sl, id); }
       if (t.closest('[data-gotown]')) { closeModal($('#sheet')); return openTown('event'); }
       if (t.closest('[data-pickrandom]')) { setChallenge(pick(TT.CHALLENGES), false); closeModal($('#sheet')); Sound.tap(); return; }
