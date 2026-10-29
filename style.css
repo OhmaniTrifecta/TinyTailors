@@ -578,3 +578,21 @@ body.big .tab { width: 88px; }
 body.viewing { overflow: hidden; }
 @supports not (height: 100dvh) { .viewer-stage svg { width: min(100%, calc((100vh - 120px) * 0.8696)); } }
 @media (max-width: 560px) { .viewer-tools .chip span { display: none; } .viewer-bar strong { font-size: 18px; } }
+
+/* suggest an idea */
+.idea-form { display: grid; gap: 8px; }
+.idea-kinds { border: 0; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.idea-kinds legend { margin-bottom: 6px; }
+.idea-kind input { position: absolute; opacity: 0; pointer-events: none; }
+.idea-kind span { display: inline-block; font-weight: 800; font-size: 14px; border: 2.5px solid var(--ink); border-radius: 999px; padding: 5px 12px; background: #fff; cursor: pointer; }
+.idea-kind input:checked + span { background: var(--butter); box-shadow: 0 2px 0 var(--ink); }
+.idea-kind input:focus-visible + span { outline: 3px solid var(--berry); outline-offset: 2px; }
+.text-area { width: 100%; border: 2.5px solid var(--ink); border-radius: 16px; padding: 10px 12px; font: 600 16px/1.35 var(--body); background: #fff; resize: vertical; }
+.text-area:focus { outline: none; border-color: var(--berry); }
+.row-label em { font-style: normal; text-transform: none; letter-spacing: 0; font-weight: 700; }
+.idea-look { border-bottom: 0; padding: 4px 0; }
+.idea-safe { margin: 0; font-size: 14px; font-weight: 700; color: var(--ink-soft); background: var(--paper-2); border-radius: 12px; padding: 8px 12px; }
+.idea-actions { display: flex; justify-content: center; margin-top: 4px; }
+.hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+.idea-thanks { display: grid; justify-items: center; text-align: center; gap: 4px; padding: 6px 0; }
+.idea-thanks svg { width: 110px; height: 110px; }

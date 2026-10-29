@@ -584,6 +584,45 @@
     Sound.pop();
   }
 
+  /* ---------------- suggest an idea ---------------- */
+  const IDEA_KINDS = [['critter', 'A critter'], ['clothes', 'Clothes'], ['accessory', 'Hat or accessory'], ['pet', 'A pet pal'], ['scene', 'A scene'], ['challenge', 'A challenge'], ['other', 'Something else']];
+  function openSuggest() {
+    sheet('Suggest an idea', `<form id="ideaForm" class="idea-form" novalidate>
+      <p class="modal-sub">Is there a critter, outfit or anything else you wish Tiny Tailors had? Tell us! Ask a grown-up before you send it.</p>
+      <fieldset class="idea-kinds"><legend class="row-label">What kind of idea?</legend>
+        ${IDEA_KINDS.map(([v, l], i) => `<label class="idea-kind"><input type="radio" name="ideaKind" value="${v}" ${i === 0 ? 'checked' : ''}><span>${l}</span></label>`).join('')}</fieldset>
+      <label class="row-label" for="ideaText">Your idea</label>
+      <textarea id="ideaText" class="text-area" maxlength="400" rows="3" placeholder="A sloth in a cozy rainbow sweater!" required></textarea>
+      <label class="row-label" for="ideaMore">Anything else? <em>(optional)</em></label>
+      <textarea id="ideaMore" class="text-area" maxlength="600" rows="2" placeholder="Colors, what it should hold, where it lives…"></textarea>
+      <label class="set-row idea-look"><input type="checkbox" id="ideaLook" checked><span><b>Send my critter's look too</b><em>So we can see what you're imagining</em></span></label>
+      <input type="text" name="website" id="ideaHp" tabindex="-1" autocomplete="off" class="hp" aria-hidden="true">
+      <p class="idea-safe">Please don't write your name, address, school or any other personal info.</p>
+      <div class="idea-actions"><button class="btn-big" type="submit" id="ideaSend">Send my idea</button></div>
+      <p class="code-err" id="ideaMsg" role="status"></p></form>`, 'wide-card');
+  }
+  async function sendIdea(form) {
+    const kind = (form.querySelector('input[name=ideaKind]:checked') || {}).value || 'other';
+    const idea = $('#ideaText').value.trim(), details = $('#ideaMore').value.trim();
+    const msg = $('#ideaMsg'), btn = $('#ideaSend');
+    if (idea.length < 3) { msg.textContent = 'Please tell us your idea first.'; $('#ideaText').focus(); return; }
+    btn.disabled = true; btn.textContent = 'Sending…'; msg.textContent = '';
+    const payload = { kind, idea, details, website: $('#ideaHp').value, look: $('#ideaLook').checked ? TT.encodeLook(state) : '', site: location.origin && /^https:/.test(location.origin) ? location.origin + location.pathname.replace(/index\.html$/, '') : '' };
+    try {
+      const r = await fetch('api/suggest', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok || !data.ok) throw new Error(data.error || 'Couldn’t send right now. Please try again later.');
+      $('#sheetBody').innerHTML = `<div class="idea-thanks">${TT.svg(TT.heart(50, 52, 34, '#ff6f96', 5) + TT.star(84, 18, 10, '#ffe17a', 3) + TT.star(16, 24, 7, '#9ee6c0', 3), '0 0 100 100')}
+        <p class="unlock-name">Thank you!</p><p class="modal-sub">Your idea was sent to the Tiny Tailors team. Keep an eye out, it might show up in the app one day!</p>
+        <button class="btn-big" type="button" data-close>Back to dressing up</button></div>`;
+      Sound.cheer();
+    } catch (e) {
+      const offline = /Failed to fetch|NetworkError|Load failed|Unexpected/.test(e.message) || location.protocol === 'file:';
+      msg.textContent = offline ? 'Ideas can only be sent from the Tiny Tailors website. Please try again there!' : e.message;
+      btn.disabled = false; btn.textContent = 'Send my idea'; Sound.undo();
+    }
+  }
+
   /* ---------------- settings ---------------- */
   function applySettings() {
     const s = PR.settings;
@@ -749,6 +788,7 @@
       const b = e.target.closest('[data-menu]'); if (!b) return;
       $('#menu').hidden = true;
       const k = b.dataset.menu;
+      if (k === 'suggest') openSuggest();
       if (k === 'share') openShare();
       if (k === 'fabric') TT.openFabricStudio({ onDone: () => renderDrawer() });
       if (k === 'doll' || k === 'coloring') openDoll(k === 'coloring');
@@ -779,6 +819,7 @@
       if (t.dataset.set === 'speak' && t.checked) Sound.say('Hello! I will read names out loud.');
     });
     $('#sheet').addEventListener('submit', e => {
+      if (e.target.id === 'ideaForm') { e.preventDefault(); sendIdea(e.target); return; }
       if (e.target.id !== 'codeForm') return;
       e.preventDefault();
       try { loadCode($('#codeInput').value); closeModal($('#sheet')); Sound.whoosh(); }

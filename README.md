@@ -44,6 +44,25 @@ Most clothes come in **20 colors** (plus a color mixer), a second **trim color**
 - **Settings**: sound, read item names out loud, calm mode (no animations), bigger buttons.
 - **Undo / Redo**, name tag with random silly names, photos, closet, drag your pet anywhere.
 
+## Ideas from players
+
+Players can tap **Menu → Suggest an idea** to send an idea for a critter, clothes, a pet, a scene or a challenge.
+Each idea arrives as a **GitHub Issue** in this repo, labeled `suggestion`. GitHub emails you about new issues
+(turn this on with **Watch → All activity** on the repo page).
+
+- **To approve an idea:** add the `approved` label to the issue.
+- **To decline:** close the issue.
+- **To build approved ideas:** ask Claude to "build the approved Tiny Tailors suggestions". Claude follows `CLAUDE.md`,
+  adds the items, pushes the update, then labels each issue `built` and closes it.
+
+No names, emails or accounts are collected. Email addresses, phone numbers and links are removed automatically.
+
+### One-time setup
+1. On GitHub: **Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token**.
+   Under **Repository access**, choose **Only select repositories → TinyTailors**. Under **Permissions → Repository permissions → Issues**, choose **Read and write**. Copy the token.
+2. On Vercel: open the project, go to **Settings → Environment Variables**, add `GITHUB_TOKEN` with that token, and save.
+3. Redeploy (Deployments → ⋯ → Redeploy). The form works from then on.
+
 ## Put it on GitHub and Vercel
 
 No build step and no installs. It's plain HTML, CSS and JavaScript.
