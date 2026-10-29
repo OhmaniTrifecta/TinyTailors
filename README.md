@@ -25,7 +25,7 @@ Tiny Tailors is a dress-up web app for kids. You pick a critter, then mix and ma
 | Magic effects | 14 animated effects |
 | Poses | 11 |
 
-Most clothes come in **20 colors** (plus a color mixer), a second **trim color**, and **17 fabric patterns** plus fabrics you design yourself. That adds up to more than **900 quindecillion** different looks.
+Most clothes come in **20 colors** (plus a color mixer), a second **trim color**, and **17 fabric patterns** plus fabrics you design yourself. That adds up to more than **1,600 quindecillion** different looks.
 
 ### Features
 - **Surprise me!** builds a random outfit with a matching color story. Lock any drawer to keep it when you shuffle.

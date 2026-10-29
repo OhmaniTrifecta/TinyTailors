@@ -221,7 +221,9 @@
     const s = n.toString();
     const groups = Math.floor((s.length - 1) / 3);
     if (groups >= names.length) return 'more than a trevigintillion';
-    const lead = s.slice(0, s.length - groups * 3);
-    return `${lead} ${names[groups]}`.trim();
+    // names starting with "sex" (sextillion, sexdecillion) are skipped: say it with the name below instead, e.g. "1,234 quindecillion"
+    const g = /^sex/.test(names[groups]) ? groups - 1 : groups;
+    const lead = s.slice(0, s.length - g * 3).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    return `${lead} ${names[g]}`.trim();
   };
 })(window.TT);
