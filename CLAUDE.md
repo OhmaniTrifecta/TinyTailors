@@ -44,3 +44,23 @@ Rules:
 - Sleeves on tops are drawn for the left arm only, wrapped in `sl(...)`, so they follow poses.
 - Canvas is 400×460; head centered at (200,165); feet at y≈408; right paw at (285,329).
 - Unlock prices: Common under 80, Rare 80+, Super rare 150+, Legendary 220+ stitches.
+
+## Project status and decisions (read this first in a new chat)
+
+- Live site: tinytailors.vercel.app (Vercel project `tinytailors`, account adolph2). `GITHUB_TOKEN` env var powers
+  the Suggest-an-idea form (fine-grained token, Issues read/write, TinyTailors only). A one-time reminder to renew it
+  runs Nov 20, 2026; a weekly Saturday task builds `approved` suggestions.
+- Audience: kids 8–12, mostly on iPhone/iPad. Always check new UI at iPhone 13, iPad Mini and desktop sizes
+  (Playwright, `devices['iPhone 13']`), and make sure nothing runs off the screen.
+- Economy (keep these rules unless Adolph changes them):
+  - Style challenges: 3 stitches a star with 3+ stars, only for improvements, 45/day cap. Daily challenge pays double
+    plus a streak bonus. Fashion show 8, twice a day. Photos/save/share are small once-a-day bonuses.
+  - Games (no daily cap): reward = max(1, round(base × 0.7^n)), base by stars 2/4/7/10/12, n = times that same game
+    already paid today. See `TT.rewardGame` in `js/progress.js`.
+  - Lucky wheel (locked items 80+ only): 10 spaces (item, All back, Half back, Free spin, 6 misses). Spin cost ≈16% of
+    price so spinning always costs a bit more than buying on average (`TT.spinCost`).
+  - Secret codes: only SHA-256 hashes live in `js/progress.js` (`CODES`); Adolph keeps the words. Never write the
+    words into the repo, commits or chat logs. To change codes, hash `tinytailors-secret:` + lowercase word.
+- Closet holds 30 looks; when full, the player picks which look to remove (`addToCloset` in `js/app.js`).
+- Credit on the title screen: "App design by Sophia and Sabrina Pernal" (no year).
+- After any change: bump `?v=` in index.html, commit with the attribution lines, push to `main`.
