@@ -1257,3 +1257,5 @@ body.calm .tfx { opacity: 0; }
 @media (max-width: 1100px) and (min-width: 561px) { #undo span, #redo span { display: none; } #undo, #redo { padding: 7px 9px; } }
 .al-st.got .al-art, .al-st.gold .al-art { border: 3px solid var(--ink); box-shadow: 0 3px 0 var(--ink); }
 .al-st.gold .al-art { border-color: #e0a400; background: #fff8d6; box-shadow: 0 3px 0 #b07a00, 0 0 0 3px #ffd84d; }
+/* stop iPhone/iPad from zooming in when a button is tapped quickly twice (pinch zoom still works) */
+* { touch-action: manipulation; }
