@@ -931,7 +931,8 @@
         <p class="modal-sub">Spend stitches on anything with a 🔒. You've unlocked ${u.got} of ${u.total}.</p>
         <div class="tiers"><span class="rarity r-common">Common · under 80</span><span class="rarity r-rare">Rare · 80+</span><span class="rarity r-super">Super rare · 150+</span><span class="rarity r-legend">Legendary · 220+</span></div>
         <ul class="earn-list"><li><b>Daily challenge</b> 6 stitches a star when you get 3 stars or more, plus a streak bonus</li><li><b>Any challenge</b> 3 stitches a star when you get 3 stars or more, up to ${TT.DAILY_CAP} a day (${TT.challengeCapLeft()} left today)</li>
-        <li><b>Fashion show</b> 8 stitches, twice a day</li><li><b>Photos</b> 3 for your first photo and 3 for your first group photo each day</li><li><b>Games</b> up to ${TT.GAME_EACH} per game when you get 3 stars or more, up to ${TT.GAME_CAP} a day (${TT.gamesLeftToday()} left today)</li><li><b>Sharing a look</b> 2 a day</li></ul>
+        <li><b>Games</b> up to 12 for 5 stars, no daily limit. Playing the same game again pays a bit less each time (down to 1), so mix it up!</li>
+        <li><b>Fashion show</b> 8 stitches, twice a day</li><li><b>Photos</b> 3 for your first photo and 3 for your first group photo each day</li><li><b>Sharing a look</b> 2 a day</li></ul>
         <button class="btn-big" type="button" data-gochallenge>Earn stitches now</button>`);
     });
 

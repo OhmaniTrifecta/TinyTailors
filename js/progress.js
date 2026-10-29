@@ -80,6 +80,25 @@
     save();
     return TT.earn(n);
   };
+  /* ---------- the game stitch formula ----------
+     reward = max(1, round(base × DECAY^n))
+       base = how well you did (by stars: 2, 4, 7, 10, 12)
+       n    = how many times this same game already paid today (resets at midnight)
+     No daily limit on games: a new game pays full, replaying the same one pays less each time,
+     bottoming out at 1 stitch. (Challenges, fashion shows and photos keep their own daily rules.) */
+  TT.DECAY = 0.7;
+  TT.GAME_BASE = [0, 2, 4, 7, 10, 12]; // by stars
+  const tidy = day => { for (const kk of Object.keys(P.perDay)) if (!kk.startsWith(day)) delete P.perDay[kk]; for (const kk of Object.keys(P.best)) if (!kk.startsWith(day)) delete P.best[kk]; };
+  TT.timesPaid = event => P.perDay[`${TT.todayKey()}:ev:${event}`] || 0;
+  TT.rewardFor = (event, base) => base > 0 ? Math.max(1, Math.round(base * Math.pow(TT.DECAY, TT.timesPaid(event)))) : 0;
+  TT.rewardEvent = function (event, base) {
+    const day = TT.todayKey(); tidy(day);
+    const earned = TT.rewardFor(event, base);
+    if (earned) { P.perDay[`${day}:ev:${event}`] = TT.timesPaid(event) + 1; P.stitches += earned; }
+    save();
+    return { earned, times: TT.timesPaid(event) };
+  };
+
   /* challenge rewards, with guards against spamming:
      - you must earn at least MIN_STARS stars (a score of 55+) to get anything
      - each challenge pays only once a day, and only for stars above your best today
@@ -122,29 +141,9 @@
   };
   TT.dailyDone = () => P.daily.date === TT.todayKey();
 
-  /* mini-game rewards: each game pays up to GAME_EACH stitches a day, all games together up to GAME_CAP */
-  TT.GAME_EACH = 12;
-  TT.GAME_CAP = 40;
-  TT.gameLeft = function (id) {
-    const day = TT.todayKey();
-    const all = P.perDay[`${day}:games`] || 0, one = P.perDay[`${day}:g-${id}`] || 0;
-    return Math.max(0, Math.min(TT.GAME_EACH - one, TT.GAME_CAP - all));
-  };
-  TT.gamesLeftToday = () => Math.max(0, TT.GAME_CAP - (P.perDay[`${TT.todayKey()}:games`] || 0));
-  TT.rewardGame = function (id, n) {
-    n = Math.max(0, Math.round(n || 0));
-    const day = TT.todayKey();
-    for (const kk of Object.keys(P.perDay)) if (!kk.startsWith(day)) delete P.perDay[kk];
-    const left = TT.gameLeft(id);
-    const pay = Math.min(n, left);
-    if (pay > 0) {
-      P.perDay[`${day}:games`] = (P.perDay[`${day}:games`] || 0) + pay;
-      P.perDay[`${day}:g-${id}`] = (P.perDay[`${day}:g-${id}`] || 0) + pay;
-      P.stitches += pay;
-    }
-    save();
-    return { earned: pay, reason: n > pay ? (pay ? 'capped' : 'cap') : null };
-  };
+  /* mini-games: base by stars, same formula */
+  TT.rewardGame = (id, stars) => TT.rewardEvent('game:' + id, TT.GAME_BASE[Math.max(0, Math.min(5, stars))]);
+  TT.gameNext = id => TT.rewardFor('game:' + id, TT.GAME_BASE[5]);
 
   /* ---------- secret codes ----------
      Only scrambled (SHA-256) versions of the codes live here, so reading this file doesn't reveal them.

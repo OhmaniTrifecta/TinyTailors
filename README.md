@@ -36,13 +36,24 @@ Most clothes come in **20 colors** (plus a color mixer), a second **trim color**
 - **Style challenges with a real judge**: 32 challenges. Every item has theme tags, and each challenge is a set of rules (enough beach items? the right scene? one color head to toe? three patterns?). The judge scores each rule, gives 1 to 5 stars and tells you exactly what to add.
 - **Daily challenge**: the same challenge for everyone each day, double stitches and a streak bonus.
 - **No spamming for stitches**: a challenge only pays with 3 stars or more (a score of 55+), only once a day for each challenge, and regular challenges pay at most 45 stitches a day.
-- **Games** (the 🎮 button): six mini-games starring your own critter. Each pays up to 12 stitches a day with 3 stars or more, up to 40 a day from all games.
+- **Games** (the 🎮 button): sixteen mini-games starring your own critter.
   - **Copycat Closet**: memorize an outfit, then rebuild it from four choices per piece (the last round adds a color trick).
   - **Customer Rush**: critter customers ask for a look ("Ready for a camping trip!"). Dress them before the timer runs out; the style judge scores each one. Love a customer? Name them and save them to your closet.
   - **Runway Rhythm**: pick one of 11 songs (Easy, Medium or Tricky), then tap Wave, Hooray!, Ta-da! or Jump! as the stars hit the line. Each song is built from its own star chart, so every star plays its note right on the beat.
   - **Critter Catch**: catch falling buttons, spools and stars, and dodge the scissors.
   - **Hide & Seek**: find your critter in a crowd of look-alikes. Later levels change just one piece, or just a color.
   - **Memory Match**: flip cards to match pairs of hats, pets, critters and more (12 or 16 cards).
+  - **Fabric Match**: swap fabric swatches to line up 3 in a row; 4 in a row makes a spool that clears a whole row. 20 moves.
+  - **Pet Parade**: run with your pet pal, jump puddles, flower pots and cones, and grab buttons.
+  - **Dress-Up Dash**: find each piece of a shown outfit before the timer runs out (it speeds up).
+  - **Tailor's Puzzle**: slide tiles to put your critter's picture back together (3×3 or 4×4), with Peek and Numbers helpers.
+  - **Spot the Difference**: two pictures of your critter, five sneaky changes.
+  - **Critter Says**: watch the poses, then copy them; one more each round.
+  - **Sewing Machine**: keep your finger on the needle as it sews three patterns.
+  - **Bubble Pop Boutique**: pop only what the customer asks for ("only hats!", "everything blue!").
+  - **Weather Wardrobe**: read the forecast, then pick the outfit that fits, fast.
+  - **Design Contest**: dress your critter for a theme and beat three rival designers; wins go on your trophy shelf.
+  - **Game stitches**: reward = the bigger of 1 or base × 0.7ⁿ, where base is set by stars (1★ 2, 2★ 4, 3★ 7, 4★ 10, 5★ 12) and n is how many times that same game already paid today. So a 5-star game pays 12, 8, 6, 4, 3, 2, 1, 1… and a different game pays full again. No daily limit on games. (Style challenges, the daily challenge, fashion shows and photos keep their own daily rules.)
 - **Lucky wheel**: Rare, Super rare and Legendary items (80+ stitches) can be won on a spinning wheel with 10 spaces: the item, **All back!** (refunds that spin), **Half back**, **Free spin**, and 6 misses, each 1 in 10. A spin costs about 16% of the item's price (15 to 55 stitches); on average spinning still costs a bit more than buying (about 1.2× to 1.4×), so it's a lucky shortcut, not a discount.
 - **Secret codes** (Menu → Secret code): type a secret word to win stitches, or one special code that unlocks everything. Each code works once per device. The codes are stored scrambled (SHA-256), so they can't be read from the app's files; the owner keeps the list.
 - **Fashion show**: pick 2 to 5 saved looks and they strut the runway to a random song, camera flashes and a cheer meter.
@@ -123,7 +134,8 @@ js/share.js                share codes
 js/sound.js                little synth sounds and music
 js/songs.js                the 11 songs for Runway Rhythm and the fashion show
 js/show.js                 fashion show and group photos
-js/games.js                the six mini-games (Games button)
+js/games.js                the games window and the first six games
+js/games2.js               ten more games (Fabric Match … Design Contest)
 js/paperdoll.js            printable paper doll and coloring page
 js/app.js                  buttons, drawers, closet, everything you tap
 ```

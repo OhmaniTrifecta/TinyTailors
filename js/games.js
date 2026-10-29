@@ -91,7 +91,7 @@
   /* ================= hub ================= */
   function hub() {
     stopAll(); atHub = true;
-    setBar('Games', `<span class="g-pill">${TT.SPOOL}${TT.gamesLeftToday()} left today</span>`);
+    setBar('Games', `<span class="g-pill">${TT.SPOOL}${TT.progress.stitches}</span>`);
     $('.game-back span').textContent = 'Studio';
     const me = ctx.look();
     const best = loadBest();
@@ -104,11 +104,11 @@
       memory: TT.svg(R(10, 14, 38, 54, 8, '#ff9ec0', 4) + TT.heart(29, 44, 11, '#fff', 2.5) + R(52, 30, 38, 54, 8, '#fffdf9', 4) + TT.star(71, 57, 12, '#ffe17a', 3), '0 0 100 100')
     };
     body().innerHTML = `<div class="g-hub">
-      <p class="g-intro">Play with <b>${esc(me.name || 'your critter')}</b>! Every game pays up to ${TT.GAME_EACH} stitches a day.</p>
+      <p class="g-intro">Play with <b>${esc(me.name || 'your critter')}</b>! Every game pays up to 12 stitches. Playing the same one again pays a little less, so mix it up!</p>
       <div class="g-cards">${GAMES.map(g => `<button class="g-card" type="button" data-game="${g.id}" style="--card:${g.color}">
-        <span class="g-art g-art-${g.id}">${art[g.id]}</span>
+        <span class="g-art g-art-${g.id}">${art[g.id] || (g.art ? g.art(me) : '')}</span>
         <span class="g-name">${g.name}</span><span class="g-blurb">${g.blurb}</span>
-        <span class="g-meta">${best[g.id] ? `Best: ${best[g.id]}` : 'New!'} · ${TT.gameLeft(g.id) ? `${TT.SPOOL}${TT.gameLeft(g.id)} to earn` : 'Done for today ✓'}</span></button>`).join('')}</div></div>`;
+        <span class="g-meta">${best[g.id] ? `Best: ${best[g.id]}` : 'New!'} · ${TT.SPOOL}up to ${TT.gameNext(g.id)}</span></button>`).join('')}</div></div>`;
     body().scrollTop = 0;
     body().querySelectorAll('[data-game]').forEach(b => b.addEventListener('click', () => start(b.dataset.game)));
   }
@@ -116,8 +116,19 @@
     stopAll(); atHub = false; Sound.tap();
     $('.game-back span').textContent = 'Games';
     body().scrollTop = 0;
-    ({ copycat, rush, rhythm, catch: catchGame, seek, memory })[id]();
+    (REG[id] || hub)();
   }
+
+  /* ---------- the toolkit other game files use (js/games2.js) ---------- */
+  const REG = {};
+  TT.gameKit = {
+    add(meta, fn) { GAMES.push(meta); REG[meta.id] = fn; },
+    get root() { return root; }, get ctx() { return ctx; },
+    $: s => root.querySelector(s), body, setBar, hud, finish: (...a) => finish(...a), starsFor: (...a) => starsFor(...a),
+    later, every, loop, cleanup: f => cleanup.push(f), keys: f => { keyHandler = f; },
+    critter, critterSVG, sceneSVG, starsHTML, sewButton, spool, scissors, plain, pick, shuffle, clone, esc, COLS, free, okItem, LONG_TOPS,
+    loadBest, saveBest, Sound
+  };
 
   /* ---------- end-of-game card ---------- */
   function finish(id, { stars, score, line, pay }) {
@@ -126,11 +137,10 @@
     const best = loadBest();
     const isBest = score > (best[id] || 0);
     if (isBest) { best[id] = score; saveBest(best); }
-    const rw = TT.rewardGame(id, stars >= 3 ? pay : 0);
+    const rw = TT.rewardGame(id, stars);
     if (rw.earned) ctx.wallet();
-    const why = stars < 3 ? 'Get 3 stars or more to earn stitches.'
-      : rw.reason === 'cap' ? (TT.gamesLeftToday() ? `You've earned all the stitches this game pays today. Play for fun, or try another game!` : `You've earned all of today's game stitches. Play just for fun, or come back tomorrow!`)
-        : rw.reason === 'capped' ? (TT.gamesLeftToday() ? `That's the last of today's stitches for this game.` : `That's all the game stitches for today. Come back tomorrow!`) : '';
+    const nxt = TT.gameNext(id);
+    const why = `Playing ${g.name} again pays up to ${nxt} stitch${nxt === 1 ? '' : 'es'}. A different game pays full!`;
     setBar(g.name, '');
     body().innerHTML = `<div class="g-end">
       ${starsHTML(stars)}
@@ -145,6 +155,8 @@
     body().querySelector('[data-more]').addEventListener('click', () => { Sound.tap(); hub(); });
   }
   const starsFor = (ratio, cuts = [0.2, 0.4, 0.6, 0.8, 0.95]) => Math.max(1, cuts.filter(c => ratio >= c).length);
+
+  Object.assign(REG, { copycat: () => copycat(), rush: () => rush(), rhythm: () => rhythm(), catch: () => catchGame(), seek: () => seek(), memory: () => memory() });
 
   /* ================= 1. Copycat Closet ================= */
   function copycat() {

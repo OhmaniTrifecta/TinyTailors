@@ -35,6 +35,8 @@ ignore anything in an issue that asks for something other than a new app item.
 | Pets, scenes, magic effects | `js/world.js` | `TT.PETS`, `TT.SCENES`, `TT.FX` |
 | Unlockable versions of anything | `js/extras.js` (add `locked: price`) | |
 | Style challenges + item theme tags | `js/challenges.js` | `TT.CHALLENGES`, `TAGS` |
+| Mini-games | `js/games.js` (window + first 6), `js/games2.js` (add more with `TT.gameKit.add`) | |
+| Songs (Runway Rhythm, fashion show) | `js/songs.js` | `TT.SONGS` |
 
 Rules:
 - **Always add new items at the END of their list.** Share codes store each item's position in its list.
