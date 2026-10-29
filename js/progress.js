@@ -88,6 +88,30 @@
   };
   TT.dailyDone = () => P.daily.date === TT.todayKey();
 
+  /* mini-game rewards: each game pays up to GAME_EACH stitches a day, all games together up to GAME_CAP */
+  TT.GAME_EACH = 12;
+  TT.GAME_CAP = 40;
+  TT.gameLeft = function (id) {
+    const day = TT.todayKey();
+    const all = P.perDay[`${day}:games`] || 0, one = P.perDay[`${day}:g-${id}`] || 0;
+    return Math.max(0, Math.min(TT.GAME_EACH - one, TT.GAME_CAP - all));
+  };
+  TT.gamesLeftToday = () => Math.max(0, TT.GAME_CAP - (P.perDay[`${TT.todayKey()}:games`] || 0));
+  TT.rewardGame = function (id, n) {
+    n = Math.max(0, Math.round(n || 0));
+    const day = TT.todayKey();
+    for (const kk of Object.keys(P.perDay)) if (!kk.startsWith(day)) delete P.perDay[kk];
+    const left = TT.gameLeft(id);
+    const pay = Math.min(n, left);
+    if (pay > 0) {
+      P.perDay[`${day}:games`] = (P.perDay[`${day}:games`] || 0) + pay;
+      P.perDay[`${day}:g-${id}`] = (P.perDay[`${day}:g-${id}`] || 0) + pay;
+      P.stitches += pay;
+    }
+    save();
+    return { earned: pay, reason: n > pay ? (pay ? 'capped' : 'cap') : null };
+  };
+
   /* ---------- favorites ---------- */
   TT.isFav = (slot, id) => P.favs.includes(`${slot}:${id}`);
   TT.toggleFav = (slot, id) => { const k = `${slot}:${id}`; const i = P.favs.indexOf(k); i >= 0 ? P.favs.splice(i, 1) : P.favs.push(k); save(); return i < 0; };

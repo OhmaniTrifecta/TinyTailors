@@ -36,6 +36,13 @@ Most clothes come in **20 colors** (plus a color mixer), a second **trim color**
 - **Style challenges with a real judge**: 32 challenges. Every item has theme tags, and each challenge is a set of rules (enough beach items? the right scene? one color head to toe? three patterns?). The judge scores each rule, gives 1 to 5 stars and tells you exactly what to add.
 - **Daily challenge**: the same challenge for everyone each day, double stitches and a streak bonus.
 - **No spamming for stitches**: a challenge only pays with 3 stars or more (a score of 55+), only once a day for each challenge, and regular challenges pay at most 45 stitches a day.
+- **Games** (the 🎮 button): six mini-games starring your own critter. Each pays up to 12 stitches a day with 3 stars or more, up to 40 a day from all games.
+  - **Copycat Closet**: memorize an outfit, then rebuild it from four choices per piece (the last round adds a color trick).
+  - **Customer Rush**: critter customers ask for a look ("Ready for a camping trip!"). Dress them before the timer runs out; the style judge scores each one.
+  - **Runway Rhythm**: tap Wave, Hooray!, Ta-da! or Jump! as the stars hit the line, and your critter strikes the pose on the runway.
+  - **Critter Catch**: catch falling buttons, spools and stars, and dodge the scissors.
+  - **Hide & Seek**: find your critter in a crowd of look-alikes. Later levels change just one piece, or just a color.
+  - **Memory Match**: flip cards to match pairs of hats, pets, critters and more (12 or 16 cards).
 - **Fashion show**: pick 2 to 5 saved looks and they strut the runway with music, camera flashes and a cheer meter.
 - **Group photo**: put 2 to 4 saved critters in one picture.
 - **Share codes**: every look turns into a code (and a link like `yoursite.vercel.app/#look=TT1-…`). Friends paste it to wear the exact look, custom fabrics included.
@@ -113,6 +120,7 @@ js/fabric.js               the fabric studio
 js/share.js                share codes
 js/sound.js                little synth sounds and music
 js/show.js                 fashion show and group photos
+js/games.js                the six mini-games (Games button)
 js/paperdoll.js            printable paper doll and coloring page
 js/app.js                  buttons, drawers, closet, everything you tap
 ```

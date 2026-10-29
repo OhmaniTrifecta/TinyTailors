@@ -584,6 +584,12 @@
     Sound.pop();
   }
 
+  /* ---------------- games ---------------- */
+  function openGames() {
+    stopDanceIf();
+    TT.openGames({ look: () => clone(state), wallet: () => renderWallet(true), onClose: () => { renderWallet(); renderDrawer(); $('#gamesBtn').focus({ preventScroll: true }); } });
+  }
+
   /* ---------------- suggest an idea ---------------- */
   const IDEA_KINDS = [['critter', 'A critter'], ['clothes', 'Clothes'], ['accessory', 'Hat or accessory'], ['pet', 'A pet pal'], ['scene', 'A scene'], ['challenge', 'A challenge'], ['other', 'Something else']];
   function openSuggest() {
@@ -754,7 +760,7 @@
         <p class="modal-sub">Spend stitches on anything with a 🔒. You've unlocked ${u.got} of ${u.total}.</p>
         <div class="tiers"><span class="rarity r-common">Common · under 80</span><span class="rarity r-rare">Rare · 80+</span><span class="rarity r-super">Super rare · 150+</span><span class="rarity r-legend">Legendary · 220+</span></div>
         <ul class="earn-list"><li><b>Daily challenge</b> 6 stitches a star when you get 3 stars or more, plus a streak bonus</li><li><b>Any challenge</b> 3 stitches a star when you get 3 stars or more, up to ${TT.DAILY_CAP} a day (${TT.challengeCapLeft()} left today)</li>
-        <li><b>Fashion show</b> 8 stitches, twice a day</li><li><b>Photos</b> 3 for your first photo and 3 for your first group photo each day</li><li><b>Sharing a look</b> 2 a day</li></ul>
+        <li><b>Fashion show</b> 8 stitches, twice a day</li><li><b>Photos</b> 3 for your first photo and 3 for your first group photo each day</li><li><b>Games</b> up to ${TT.GAME_EACH} per game when you get 3 stars or more, up to ${TT.GAME_CAP} a day (${TT.gamesLeftToday()} left today)</li><li><b>Sharing a look</b> 2 a day</li></ul>
         <button class="btn-big" type="button" data-gochallenge>Earn stitches now</button>`);
     });
 
@@ -788,6 +794,7 @@
       const b = e.target.closest('[data-menu]'); if (!b) return;
       $('#menu').hidden = true;
       const k = b.dataset.menu;
+      if (k === 'games') openGames();
       if (k === 'suggest') openSuggest();
       if (k === 'share') openShare();
       if (k === 'fabric') TT.openFabricStudio({ onDone: () => renderDrawer() });
@@ -842,6 +849,7 @@
       const m = e.target.closest('[data-dollmode]'); if (m) return openDoll(m.dataset.dollmode === 'coloring');
       const a = e.target.closest('[data-dollact]'); if (a) return dollAction(a.dataset.dollact);
     });
+    $('#gamesBtn').addEventListener('click', openGames);
     $('#challengeBtn').addEventListener('click', openChallengePicker);
     $('#challengeDone').addEventListener('click', judgeNow);
     $('#challengeNew').addEventListener('click', openChallengePicker);
@@ -857,7 +865,7 @@
       if (e.key === 'Escape') { if (!$('#dollModal').hidden && dollHash && location.hash === '#doll') { dollHash = false; window.history.back(); } document.querySelectorAll('.modal:not([hidden])').forEach(closeModal); }
       // shortcuts only for the dress-up screen: never while typing, or while a window is open
       if (e.target.closest('input, textarea, select, [contenteditable]')) return;
-      if (document.querySelector('.modal:not([hidden])') || !$('#viewer').hidden) return;
+      if (document.querySelector('.modal:not([hidden]), .game, .runway') || !$('#viewer').hidden) return;
       if ($('#app').hidden) return;
       if (e.key === 'r' || e.key === 'R') $('#surprise').click();
       if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); (e.shiftKey ? $('#redo') : $('#undo')).click(); }
