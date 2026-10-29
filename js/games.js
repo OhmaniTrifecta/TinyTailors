@@ -294,9 +294,20 @@
         const tips = res.lines.filter(l => !l.good).slice(0, 2);
         body().innerHTML = `<div class="ru-result"><div class="ru-stage">${TT.svg(TT.compose(st, { pfx: `rr${n}-`, animated: true, pet: false }), '0 0 400 460')}</div>
           <div class="ru-verdict">${starsHTML(stars)}<p class="g-say">“${quote}”</p>${tips.length ? `<ul class="ru-tips">${tips.map(l => `<li>${esc(l.msg)}</li>`).join('')}</ul>` : ''}
+          <form class="ru-save" id="ruSave"><label for="ruName">Keep this critter? Give it a name:</label>
+            <div class="ru-save-row"><input id="ruName" class="text-in" maxlength="24" value="${esc(st.name)}" autocomplete="off" aria-label="Critter name">
+            <button class="btn-soft" type="submit">Save to closet</button></div><p class="ru-saved" id="ruSaved" role="status" aria-live="polite"></p></form>
           <button class="btn-big" type="button" data-next>${n + 1 < COUNT ? 'Next customer' : 'Close the shop'}</button></div></div>`;
         stars >= 4 ? Sound.cheer() : stars >= 3 ? Sound.sparkle() : Sound.undo();
         body().querySelector('[data-next]').addEventListener('click', () => { n++; customer(); });
+        $('#ruSave').addEventListener('submit', e => {
+          e.preventDefault();
+          const name = $('#ruName').value.trim().slice(0, 24) || st.name;
+          const look = clone(st); look.name = name; look.pose = { id: 'wave' };
+          const ok = ctx.saveLook && ctx.saveLook(look);
+          $('#ruSaved').textContent = ok === false ? 'Your closet is full! Remove a look to make room.' : `${name} is hanging in your closet!`;
+          if (ok !== false) { Sound.sparkle(); $('#ruSave').querySelector('button').disabled = true; $('#ruName').disabled = true; }
+        });
       }
     }
     customer();

@@ -38,7 +38,7 @@ Most clothes come in **20 colors** (plus a color mixer), a second **trim color**
 - **No spamming for stitches**: a challenge only pays with 3 stars or more (a score of 55+), only once a day for each challenge, and regular challenges pay at most 45 stitches a day.
 - **Games** (the 🎮 button): six mini-games starring your own critter. Each pays up to 12 stitches a day with 3 stars or more, up to 40 a day from all games.
   - **Copycat Closet**: memorize an outfit, then rebuild it from four choices per piece (the last round adds a color trick).
-  - **Customer Rush**: critter customers ask for a look ("Ready for a camping trip!"). Dress them before the timer runs out; the style judge scores each one.
+  - **Customer Rush**: critter customers ask for a look ("Ready for a camping trip!"). Dress them before the timer runs out; the style judge scores each one. Love a customer? Name them and save them to your closet.
   - **Runway Rhythm**: pick one of 11 songs (Easy, Medium or Tricky), then tap Wave, Hooray!, Ta-da! or Jump! as the stars hit the line. Each song is built from its own star chart, so every star plays its note right on the beat.
   - **Critter Catch**: catch falling buttons, spools and stars, and dodge the scissors.
   - **Hide & Seek**: find your critter in a crowd of look-alikes. Later levels change just one piece, or just a color.

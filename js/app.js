@@ -729,7 +729,9 @@
   /* ---------------- games ---------------- */
   function openGames() {
     stopDanceIf();
-    TT.openGames({ look: () => clone(state), wallet: () => renderWallet(true), onClose: () => { renderWallet(); renderDrawer(); $('#gamesBtn').focus({ preventScroll: true }); } });
+    TT.openGames({ look: () => clone(state), wallet: () => renderWallet(true),
+      saveLook: look => { closet.unshift(sanitize(look)); closet = closet.slice(0, 30); store.set(closetKey, closet); renderCloset(); return true; },
+      onClose: () => { renderWallet(); renderDrawer(); $('#gamesBtn').focus({ preventScroll: true }); } });
   }
 
   /* ---------------- suggest an idea ---------------- */
