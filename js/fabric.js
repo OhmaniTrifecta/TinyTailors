@@ -101,7 +101,7 @@
       if (t.closest('[data-clear]')) { px = Array(N * N).fill(''); draw(); }
       const st = t.closest('[data-start]'); if (st) { px = STARTERS[st.dataset.start].split('').map(ch => ch === '#' ? brush : ''); draw(); }
       if (t.closest('[data-save]')) {
-        name = (wrap.querySelector('#fabName').value || 'My fabric').slice(0, 20);
+        name = TT.cleanName(wrap.querySelector('#fabName').value.slice(0, 20), 'My fabric');
         if (editing) { editing.px = px.slice(); editing.name = name; }
         else { const id = 'fab' + Date.now().toString(36); P.fabrics.push({ id, name, px: px.slice() }); opts && opts.onSave && opts.onSave(id); }
         if (P.fabrics.length > 12) P.fabrics.shift();

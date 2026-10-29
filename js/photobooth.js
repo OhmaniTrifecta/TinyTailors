@@ -120,7 +120,7 @@
     root.addEventListener('submit', e => {
       if (e.target.id !== 'boothOwn') return;
       e.preventDefault();
-      const v = root.querySelector('#boothText').value.trim();
+      const v = TT.cleanName(root.querySelector('#boothText').value.trim());
       if (v) add({ kind: 'word', text: v });
     });
     // dragging stickers

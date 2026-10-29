@@ -435,7 +435,7 @@
     shell.body().querySelector('[data-next]').addEventListener('click', () => { day.i++; if (day.i < day.queue.length) intro(); else endDay(); });
     shell.body().querySelector('#crSave').addEventListener('submit', e => {
       e.preventDefault();
-      const name = shell.body().querySelector('#crName').value.trim().slice(0, 24) || st.name;
+      const name = TT.cleanName(shell.body().querySelector('#crName').value.trim().slice(0, 24), st.name);
       const lk = clone(st); lk.name = name; lk.pose = { id: 'wave' };
       shell.ctx.saveLook(lk, saved => { const m = shell.body().querySelector('#crSaved'); if (!m) return; m.textContent = saved ? `${name} is hanging in your closet!` : 'Not saved.'; if (saved) { SND().sparkle(); shell.body().querySelector('#crSave button').disabled = true; } });
     });
@@ -525,6 +525,6 @@
     shell.body().innerHTML = `<div class="cr-name"><div class="cr-shop">${shopArt()}</div>
       <form id="crNameForm" class="code-in"><input id="crShopName" class="text-in" maxlength="22" placeholder="Tiny Tailors" value="${esc(c.shopName)}" autocomplete="off" aria-label="Shop name"><button class="btn-big" type="submit">Hang the sign</button></form>
       <p class="modal-sub">Please don't use your real name or your school's name.</p></div>`;
-    shell.body().querySelector('#crNameForm').addEventListener('submit', e => { e.preventDefault(); c.shopName = shell.body().querySelector('#crShopName').value.trim().slice(0, 22); save(); SND().sparkle(); home(); });
+    shell.body().querySelector('#crNameForm').addEventListener('submit', e => { e.preventDefault(); c.shopName = TT.cleanName(shell.body().querySelector('#crShopName').value.trim().slice(0, 22)); save(); SND().sparkle(); home(); });
   }
 })(window.TT);

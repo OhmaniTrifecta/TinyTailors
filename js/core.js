@@ -83,6 +83,20 @@ window.TT = window.TT || {};
     return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296);
   };
 
+  /* ---------- kind words only ----------
+     Names (critters, the shop, fabrics, photo booth words) can't contain rude words.
+     Whole words are checked, plus a letters-only check for the worst ones so "f.u.c.k" or "s h i t" don't sneak through. */
+  const RUDE = /\b(fuck\w*|f+u+c+k+|shit\w*|bitch\w*|porn\w*|sex\w*|nazi\w*|dick\w*|cock(?!atiel)\w*|puss(y|ies)|cunt\w*|whore\w*|slut\w*|bastard\w*|ass|asses|asshole\w*|arse\w*|penis\w*|vagina\w*|boobs?|tits?|nigg\w*|fag\w*|retard\w*|damn\w*|hell|crap\w*|piss\w*|wtf|stfu)\b/gi;
+  const RUDE_SQUASHED = /(fuck|shit|bitch|porn|cunt|nigg|whore|slut|pussy|penis|vagina|asshole|retard|nazi)/;
+  const squash = t => String(t || '').toLowerCase().replace(/[0@]/g, 'o').replace(/[1!|]/g, 'i').replace(/3/g, 'e').replace(/[4]/g, 'a').replace(/[5$]/g, 's').replace(/[^a-z]/g, '');
+  TT.isRude = t => { RUDE.lastIndex = 0; return RUDE.test(String(t || '')) || RUDE_SQUASHED.test(squash(t)); };
+  /* removes rude words; if something rude is still hidden in it, the whole name goes */
+  TT.cleanName = function (t, fallback = '') {
+    let s = String(t || '').replace(RUDE, '').replace(/\s{2,}/g, ' ').trim();
+    if (RUDE_SQUASHED.test(squash(s))) s = '';
+    return s || fallback;
+  };
+
   /* ---------- palettes ---------- */
   TT.COLORS = [
     { id: 'bubblegum', name: 'Bubblegum', hex: '#ff9ec0' },

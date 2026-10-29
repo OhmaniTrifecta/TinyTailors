@@ -317,7 +317,7 @@
         body().querySelector('[data-next]').addEventListener('click', () => { n++; customer(); });
         $('#ruSave').addEventListener('submit', e => {
           e.preventDefault();
-          const name = $('#ruName').value.trim().slice(0, 24) || st.name;
+          const name = TT.cleanName($('#ruName').value.trim().slice(0, 24), st.name);
           const look = clone(st); look.name = name; look.pose = { id: 'wave' };
           ctx.saveLook(look, saved => {
             const msg = $('#ruSaved'); if (!msg) return;

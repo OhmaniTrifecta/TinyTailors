@@ -35,7 +35,7 @@
       if (S.trim) out[slot].color2 = (pal.some(p => p.id === e.color2) || TT.isHex(e.color2)) ? e.color2 : null;
       if (S.patterns && TT.patternExists(e.pattern)) out[slot].pattern = e.pattern || 'solid';
     }
-    if (typeof s.name === 'string') out.name = s.name.slice(0, 24);
+    if (typeof s.name === 'string') out.name = TT.cleanName(s.name.slice(0, 24));
     if (s.petPos && isFinite(s.petPos.x) && isFinite(s.petPos.y)) out.petPos = { x: +s.petPos.x, y: +s.petPos.y };
     return out;
   }
@@ -1025,7 +1025,10 @@
     $('#redo').addEventListener('click', () => { if (hIndex < history.length - 1) { hIndex++; state = JSON.parse(history[hIndex]); Sound.pop(); renderStage(true); renderDrawer(); renderTabs(); } });
 
     $('#name').addEventListener('input', e => { state.name = e.target.value; fitName(); store.set('tinytailors.current', state); });
-    $('#name').addEventListener('change', () => commit({ pop: false, drawer: false }));
+    $('#name').addEventListener('change', () => {
+      if (TT.isRude(state.name)) { state.name = TT.cleanName(state.name); $('#name').value = state.name; fitName(); toast('Let\'s pick a kinder name! 💗'); Sound.undo(); }
+      commit({ pop: false, drawer: false });
+    });
     $('#nameDice').addEventListener('click', () => { state.name = randomName(); Sound.pop(); commit({ drawer: false }); });
 
     $('#soundBtn').addEventListener('click', () => {
