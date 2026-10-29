@@ -835,3 +835,10 @@ body.gaming { overflow: hidden; }
   .unlock-art svg { width: 68px; height: 68px; }
   .unlock-art .big-swatch { width: 64px; height: 64px; }
 }
+
+/* secret codes */
+.secret-card #secretInput { text-transform: uppercase; letter-spacing: .08em; }
+.secret-msg { min-height: 1.5em; margin: 10px 0 0; font-weight: 700; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.secret-msg.good { color: #2f8a5f; font-size: 19px; }
+.secret-msg.bad { color: var(--berry-deep); }
+.secret-msg .spool { width: 22px; height: 22px; }

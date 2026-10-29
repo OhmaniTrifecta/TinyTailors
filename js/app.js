@@ -693,6 +693,38 @@
     Sound.pop();
   }
 
+  /* ---------------- secret codes ---------------- */
+  let codeMisses = 0, codeWaitUntil = 0;
+  function openSecret() {
+    sheet('Secret code', `<p class="modal-sub">Got a secret code? Type it here to win a prize. Each code works one time.</p>
+      <form class="code-in" id="secretForm"><input id="secretInput" class="text-in" placeholder="Type the secret word" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Secret code" maxlength="30"><button class="btn-big" type="submit">Redeem</button></form>
+      <p class="secret-msg" id="secretMsg" role="status" aria-live="polite"></p>`, 'secret-card');
+    setTimeout(() => { const i = $('#secretInput'); i && i.focus({ preventScroll: true }); }, 50);
+  }
+  function redeemSecret() {
+    const msg = $('#secretMsg'), input = $('#secretInput');
+    if (Date.now() < codeWaitUntil) { msg.className = 'secret-msg bad'; msg.textContent = `Too many tries! Wait ${Math.ceil((codeWaitUntil - Date.now()) / 1000)} seconds.`; return; }
+    const r = TT.redeemCode(input.value);
+    if (r.ok) {
+      codeMisses = 0; input.value = '';
+      msg.className = 'secret-msg good';
+      if (r.all) {
+        msg.innerHTML = `<b>Wow!</b> Everything is unlocked: ${r.count} special items!`;
+        renderDrawer(); renderTabs(); Sound.cheer(); celebrate('glitter');
+      } else {
+        msg.innerHTML = `<b>Secret found!</b> ${SPOOL} +${r.stitches} stitches`;
+        renderWallet(true); Sound.cheer(); celebrate('confetti');
+      }
+      return;
+    }
+    Sound.undo();
+    msg.className = 'secret-msg bad';
+    if (r.error === 'used') { msg.textContent = 'You already used that code. Each code works one time.'; return; }
+    codeMisses++;
+    if (codeMisses >= 5) { codeMisses = 0; codeWaitUntil = Date.now() + 30000; msg.textContent = 'Hmm, that’s not a secret code. Too many tries! Wait 30 seconds.'; return; }
+    msg.textContent = 'Hmm, that’s not a secret code. Check the spelling and try again.';
+  }
+
   /* ---------------- games ---------------- */
   function openGames() {
     stopDanceIf();
@@ -904,6 +936,7 @@
       $('#menu').hidden = true;
       const k = b.dataset.menu;
       if (k === 'games') openGames();
+      if (k === 'secret') openSecret();
       if (k === 'suggest') openSuggest();
       if (k === 'share') openShare();
       if (k === 'fabric') TT.openFabricStudio({ onDone: () => renderDrawer() });
@@ -939,6 +972,7 @@
     });
     $('#sheet').addEventListener('submit', e => {
       if (e.target.id === 'ideaForm') { e.preventDefault(); sendIdea(e.target); return; }
+      if (e.target.id === 'secretForm') { e.preventDefault(); redeemSecret(); return; }
       if (e.target.id !== 'codeForm') return;
       e.preventDefault();
       try { loadCode($('#codeInput').value); closeModal($('#sheet')); Sound.whoosh(); }

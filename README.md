@@ -44,6 +44,7 @@ Most clothes come in **20 colors** (plus a color mixer), a second **trim color**
   - **Hide & Seek**: find your critter in a crowd of look-alikes. Later levels change just one piece, or just a color.
   - **Memory Match**: flip cards to match pairs of hats, pets, critters and more (12 or 16 cards).
 - **Lucky wheel**: Rare, Super rare and Legendary items (80+ stitches) can be won on a spinning wheel with 10 spaces: the item, **All back!** (refunds that spin), **Half back**, **Free spin**, and 6 misses, each 1 in 10. A spin costs about 16% of the item's price (15 to 55 stitches); on average spinning still costs a bit more than buying (about 1.2× to 1.4×), so it's a lucky shortcut, not a discount.
+- **Secret codes** (Menu → Secret code): type a secret word to win stitches, or one special code that unlocks everything. Each code works once per device. The codes are stored scrambled (SHA-256), so they can't be read from the app's files; the owner keeps the list.
 - **Fashion show**: pick 2 to 5 saved looks and they strut the runway to a random song, camera flashes and a cheer meter.
 - **Group photo**: put 2 to 4 saved critters in one picture.
 - **Share codes**: every look turns into a code (and a link like `yoursite.vercel.app/#look=TT1-…`). Friends paste it to wear the exact look, custom fabrics included.

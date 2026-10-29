@@ -146,6 +146,73 @@
     return { earned: pay, reason: n > pay ? (pay ? 'capped' : 'cap') : null };
   };
 
+  /* ---------- secret codes ----------
+     Only scrambled (SHA-256) versions of the codes live here, so reading this file doesn't reveal them.
+     Each code works once per device; redeemed codes are remembered in progress.codes. */
+  const CODES = {
+    'fbac01d514051220f0bba9851b896beadbc35d000e2bba534b6e0b3a13fc6905': { stitches: 100 },
+    'a51a6c4012471ff411c5c35158020c874a5894a02d2bb09c454bc466d65ec6e8': { stitches: 100 },
+    '8ba8444113bda17ffd81ea17ebb174cab8e990ae007890f992ec65e57a387da6': { stitches: 100 },
+    'fa218879821a2eab19409d1791dc01b115af3256d9b7cacf1844a04e0d9ad9be': { stitches: 100 },
+    'cff6f88510d5148db3a982c254f54374b260f4a38a98450c3779d69156c14f74': { stitches: 100 },
+    '2aed3508c7b22a7c547d286750feeca81bbe542a3b1554b468e313e8ffaf78a0': { stitches: 100 },
+    '664bb195ce3b655ceac3b28d70d8e3b16052d69e5c99bea75bebddbd7dc95898': { stitches: 100 },
+    'ce448ef1dff0ecc0fc1780c64174659f0835244df6d7fa6093bc91216a58aeec': { stitches: 100 },
+    'd44af9ff23da940c2a92d496439698e7e2826a548928e8967b75b6f9d76a6aaa': { stitches: 100 },
+    'e0d4060201318b8598e0ae6ec4b5864307ba79b9678760f38d81bd18f678b017': { stitches: 100 },
+    '2b5905ff86cae665e2e7a4b332580309465407279eae46dde8bd68c4cc584c65': { all: true }
+  };
+  // tiny SHA-256 (works everywhere, even where crypto.subtle isn't available)
+  function sha256(str) {
+    const K = [], H = [];
+    let n = 2, c = 0;
+    const frac = x => ((x - Math.floor(x)) * 4294967296) >>> 0;
+    while (c < 64) { let p = true; for (let d = 2; d * d <= n; d++) if (n % d === 0) { p = false; break; } if (p) { if (c < 8) H[c] = frac(Math.pow(n, 1 / 2)); K[c++] = frac(Math.pow(n, 1 / 3)); } n++; }
+    const bytes = unescape(encodeURIComponent(str)).split('').map(ch => ch.charCodeAt(0));
+    const bitLen = bytes.length * 8;
+    bytes.push(0x80); while (bytes.length % 64 !== 56) bytes.push(0);
+    for (let i = 7; i >= 0; i--) bytes.push(i > 3 ? 0 : (bitLen >>> (i * 8)) & 255);
+    const rotr = (x, s) => (x >>> s) | (x << (32 - s));
+    for (let o = 0; o < bytes.length; o += 64) {
+      const w = [];
+      for (let i = 0; i < 16; i++) w[i] = (bytes[o + 4 * i] << 24) | (bytes[o + 4 * i + 1] << 16) | (bytes[o + 4 * i + 2] << 8) | bytes[o + 4 * i + 3];
+      for (let i = 16; i < 64; i++) {
+        const s0 = rotr(w[i - 15], 7) ^ rotr(w[i - 15], 18) ^ (w[i - 15] >>> 3), s1 = rotr(w[i - 2], 17) ^ rotr(w[i - 2], 19) ^ (w[i - 2] >>> 10);
+        w[i] = (w[i - 16] + s0 + w[i - 7] + s1) | 0;
+      }
+      let [a, b, cc, d, e, f, g, h] = H;
+      for (let i = 0; i < 64; i++) {
+        const t1 = (h + (rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25)) + ((e & f) ^ (~e & g)) + K[i] + w[i]) | 0;
+        const t2 = ((rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22)) + ((a & b) ^ (a & cc) ^ (b & cc))) | 0;
+        h = g; g = f; f = e; e = (d + t1) | 0; d = cc; cc = b; b = a; a = (t1 + t2) | 0;
+      }
+      [a, b, cc, d, e, f, g, h].forEach((v, i) => { H[i] = (H[i] + v) | 0; });
+    }
+    return H.map(v => (v >>> 0).toString(16).padStart(8, '0')).join('');
+  }
+  TT.unlockEverything = function () {
+    let n = 0;
+    const visit = (kind, list) => list.forEach(o => { if (o.locked && TT.isLocked(kind, o)) { P.unlocked.push(key(kind, o.id)); n++; } });
+    for (const [slot, S] of Object.entries(TT.SLOTS)) visit(slot === 'animal' ? 'animal' : slot, S.items);
+    visit('color', TT.COLORS); visit('fur', TT.FUR); visit('pattern', TT.PATTERNS);
+    save();
+    return n;
+  };
+  /* returns { ok, stitches } or { ok, all, count } or { error: 'bad' | 'used' } */
+  TT.redeemCode = function (text) {
+    const word = String(text || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (!word) return { error: 'bad' };
+    const h = sha256('tinytailors-secret:' + word);
+    const prize = CODES[h];
+    if (!prize) return { error: 'bad' };
+    P.codes = P.codes || [];
+    if (P.codes.includes(h)) return { error: 'used' };
+    P.codes.push(h);
+    if (prize.all) { const count = TT.unlockEverything(); return { ok: true, all: true, count }; }
+    P.stitches += prize.stitches; save();
+    return { ok: true, stitches: prize.stitches };
+  };
+
   /* ---------- favorites ---------- */
   TT.isFav = (slot, id) => P.favs.includes(`${slot}:${id}`);
   TT.toggleFav = (slot, id) => { const k = `${slot}:${id}`; const i = P.favs.indexOf(k); i >= 0 ? P.favs.splice(i, 1) : P.favs.push(k); save(); return i < 0; };
