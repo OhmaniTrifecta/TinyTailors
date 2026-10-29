@@ -118,8 +118,23 @@
   const NAMES = ['Muffin', 'Pickles', 'Waffles', 'Noodle', 'Bean', 'Sprinkles', 'Biscuit', 'Pudding', 'Clover', 'Pumpkin', 'Button', 'Nugget', 'Marshmallow', 'Taco', 'Cupcake', 'Bubbles', 'Peaches', 'Toffee', 'Dumpling', 'Pebble', 'Maple', 'Jellybean', 'Bao', 'Poppy', 'Fig', 'Gizmo', 'Tofu', 'Socks', 'Wiggles', 'Mango'];
   const SHOP_RULES = ['tags', 'hold', 'avoid', 'dressed', 'many', 'pet'];
   const COLOR_RULES = ['someColors', 'onlyColors', 'oneColor'];
-  const pool = () => TT.CHALLENGES.map(ch => ({ id: ch.id, text: ch.text, rules: ch.rules.filter(r => SHOP_RULES.includes(r.type) || (lvl('dye') && COLOR_RULES.includes(r.type))).filter(r => r.type !== 'pet' || lvl('drawers') >= 3).filter(r => r.type !== 'hold' || lvl('drawers') >= 2) }))
-    .filter(ch => ch.rules.some(r => r.type === 'tags'));
+  // customers only ask for things the player can make right now: slots in the shop, clothes they own, colors they can dye
+  const ownedNow = (s, it) => !TT.isLocked(s, it) && !TT.outOfSeason(s, it);
+  const hasTagged = (s, tags) => TT.SLOTS[s].items.some(it => ownedNow(s, it) && tagsOf(s, it.id).some(t => tags.includes(t)));
+  const canDo = r => {
+    const sl = slotsNow();
+    if (r.type === 'tags') return sl.filter(s => hasTagged(s, r.tags)).length >= r.min;
+    if (r.type === 'hold') return sl.includes('hold') && hasTagged('hold', r.tags);
+    if (r.type === 'pet') return sl.includes('pet');
+    if (r.type === 'many') return sl.length >= r.min;
+    if (COLOR_RULES.includes(r.type)) return !!lvl('dye') && (r.families || []).every(f => famsNow().has(f));
+    return SHOP_RULES.includes(r.type);
+  };
+  const pool = () => {
+    const all = TT.CHALLENGES.filter(ch => ch.rules.some(r => r.type === 'tags') && ch.rules.filter(r => r.type === 'tags').every(canDo))
+      .map(ch => ({ id: ch.id, text: ch.text, rules: ch.rules.filter(canDo) }));
+    return all.length ? all : TT.CHALLENGES.filter(ch => ch.rules.some(r => r.type === 'tags')).map(ch => ({ id: ch.id, text: ch.text, rules: ch.rules.filter(r => r.type === 'tags' || r.type === 'dressed') }));
+  };
   const FAM_LIST = ['pink', 'red', 'orange', 'yellow', 'green', 'blue', 'purple', 'white'];
   const COL_OF_FAM = { pink: 'bubblegum', red: 'strawberry', orange: 'peach', yellow: 'butter', green: 'mint', blue: 'sky', purple: 'lavender', white: 'cloud', brown: 'cocoa', gray: 'cloud', dark: 'night' };
   // only ask for a color the shop's swatches can actually make (e.g. there is no gray swatch)
@@ -152,7 +167,7 @@
       const ch = { id: 'exam', text: `${two[0].text}, and ${lower(two[1].text)}`, rules: two[0].rules.filter(r => r.type === 'tags').concat(two[1].rules.filter(r => r.type === 'tags'), [{ type: 'dressed', w: 15, tip: 'Finish the outfit: a top, something on the bottom and shoes.' }]) };
       const st = baseLook('owl', 'smoke', 'determined', 'The Royal Inspector');
       st.face = { id: TT.itemOf('face', 'monocle') ? 'monocle' : null, color: 'butter', color2: null };
-      return { kind, name: 'The Royal Inspector', animal: 'owl', st, op: { loves: ['royal', 'hero'], dislikes: ['sleepy'], color: fam }, ch, twists: [{ type: 'color', fam }], text: `Hmm. So you want to be a ${RANKS[c.rank + 1].name}? Show me what you can do. My wish: “${ch.text}!”` };
+      return { kind, name: 'The Royal Inspector', animal: 'owl', st, op: { loves: ['royal', 'hero'], dislikes: ['sleepy'], color: fam }, ch, twists: lvl('dye') ? [{ type: 'color', fam }] : [], text: `Hmm. So you want to be a ${RANKS[c.rank + 1].name}? Show me what you can do. My wish: “${ch.text}!”` };
     }
     // a walk-in critter
     const animal = pick(TT.ANIMALS.filter(a => !a.locked || !TT.isLocked('animal', a)));
@@ -164,8 +179,10 @@
       const other = pick(ps.filter(x => x.id !== ch.id));
       ch = { id: ch.id + '+' + other.id, text: `${ch.text}, and ${lower(other.text)}`, rules: ch.rules.concat(other.rules.filter(x => x.type === 'tags')) };
     }
-    if (r >= 1 && Math.random() < 0.35) twists.push({ type: 'color', fam: wearableFam(op.color) });
-    const noSlots = slotsNow().filter(s => !['top', 'bottom', 'shoes'].includes(s));
+    if (r >= 1 && lvl('dye') && Math.random() < 0.35) twists.push({ type: 'color', fam: wearableFam(op.color) });
+    // "no hats" etc. only when the wish can still be met without that slot
+    const stillOk = s => ch.rules.every(x => x.type === 'tags' ? slotsNow().filter(y => y !== s && hasTagged(y, x.tags)).length >= x.min : x.type === 'hold' ? s !== 'hold' : x.type === 'pet' ? s !== 'pet' : x.type === 'many' ? slotsNow().length - 1 >= x.min : true);
+    const noSlots = slotsNow().filter(s => !['top', 'bottom', 'shoes'].includes(s) && stillOk(s));
     if (r >= 2 && noSlots.length && Math.random() < 0.3) twists.push({ type: 'no', slot: pick(noSlots) });
     if (r >= 3 && Math.random() < 0.3) twists.push({ type: 'rush' });
     const vip = r >= 4 && Math.random() < 0.18;
@@ -308,7 +325,13 @@
     const opts = {};
     slots.forEach(s => {
       const items = TT.SLOTS[s].items.filter(it => owned(s, it));
-      const fits = shuffle(items.filter(i => tagsOf(s, i.id).some(t => goodTags.has(t)))).slice(0, Math.min(3, Math.ceil(per / 3)));
+      // one owned piece for each thing the customer asked for, so every wish can be met from the rack
+      const need = [];
+      cu.ch.rules.filter(r => r.type === 'tags' || (r.type === 'hold' && s === 'hold')).forEach(r => {
+        const m = shuffle(items.filter(i => !need.includes(i) && tagsOf(s, i.id).some(t => r.tags.includes(t))))[0];
+        if (m && need.length < per - 1) need.push(m);
+      });
+      const fits = need.concat(shuffle(items.filter(i => !need.includes(i) && tagsOf(s, i.id).some(t => goodTags.has(t)))).slice(0, Math.max(0, Math.min(3, Math.ceil(per / 3)) - need.length)));
       const rest = shuffle(items.filter(i => !fits.includes(i))).slice(0, per - fits.length);
       opts[s] = shuffle(fits.concat(rest)).map(i => ({ id: i.id, color: pick(cols).id }));
     });
@@ -353,13 +376,9 @@
     const drawDye = () => {
       const box = $('#crDye');
       const e = st[tab];
-      // without the Dye station, a customer with a favorite-color wish still lets you dye in that color
-      const wish = cu.twists.find(t => t.type === 'color');
-      const wishCols = wish ? cols.filter(x => TT.colorFamily(x.hex) === wish.fam) : [];
-      const dyeCols = lvl('dye') ? cols : wishCols;
-      if (!dyeCols.length || !e.id || !TT.SLOTS[tab].palette || (TT.itemOf(tab, e.id) || {}).fixed) { box.hidden = true; return; }
+      if (!lvl('dye') || !e.id || !TT.SLOTS[tab].palette || (TT.itemOf(tab, e.id) || {}).fixed) { box.hidden = true; return; }
       box.hidden = false;
-      box.innerHTML = `<span>🎨 ${lvl('dye') ? 'Dye' : `${esc(TT.COLOR_WORD[wish.fam])} dye`}:</span>` + dyeCols.map(cc => `<button class="swatch" type="button" data-dye="${cc.id}" style="background:${cc.hex}" aria-label="${cc.name}" aria-pressed="${e.color === cc.id}"></button>`).join('');
+      box.innerHTML = `<span>🎨 Dye:</span>` + cols.map(cc => `<button class="swatch" type="button" data-dye="${cc.id}" style="background:${cc.hex}" aria-label="${cc.name}" aria-pressed="${e.color === cc.id}"></button>`).join('');
     };
     const react = (slot, id) => {
       const el = $('#crReact'); if (!el) return;
