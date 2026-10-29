@@ -22,26 +22,39 @@
     save();
     return true;
   };
-  /* lucky wheel: a spin costs about 13% of the item's price (rounded up to 5), with a SPIN_ODDS chance to win.
-     On average that's a bit MORE than just buying it (about 1.2–1.4×), so the wheel is a lucky shortcut,
-     not a cheaper way to unlock. Only Rare items and up (SPIN_MIN_PRICE+) have a wheel.
+  /* lucky wheel: 10 spaces, each 1 in 10:
+       the item · all your stitches back · half back · a free spin · 6 misses
+     Refunds give back what that spin cost (a free spin cost nothing, so it refunds nothing).
+     With refunds and free spins, winning takes about 7.65 spins' worth of stitches on average, so a spin
+     costs about 16% of the item's price, and never so little that spinning beats just buying it.
+     Only Rare items and up (SPIN_MIN_PRICE+) have a wheel.
      The result is decided (and saved) the moment you spin, so closing the window can't lose a prize. */
-  TT.SPIN_ODDS = 0.1;
   TT.SPIN_MIN_PRICE = 80;
+  TT.SPIN_SPACES = ['win', 'miss', 'refund', 'miss', 'again', 'miss', 'half', 'miss', 'miss', 'miss'];
   TT.spinCost = obj => {
-    let c = Math.max(10, Math.round(obj.locked * 0.13 / 5) * 5);
-    while (c * 10 <= obj.locked) c += 5; // never cheaper than buying, on average
+    let c = Math.max(10, Math.round(obj.locked * 0.16 / 5) * 5);
+    while (c * 7.65 <= obj.locked * 1.1) c += 5; // on average, always a bit more than buying
     return c;
   };
   TT.canWheel = obj => !!(obj && obj.locked >= TT.SPIN_MIN_PRICE);
+  TT.freeSpins = () => P.freeSpins || 0;
   TT.spinFor = function (kind, obj) {
     const cost = TT.spinCost(obj);
-    if (!TT.canWheel(obj) || !TT.isLocked(kind, obj) || P.stitches < cost) return null;
-    P.stitches -= cost;
-    const win = Math.random() < TT.SPIN_ODDS;
-    if (win) P.unlocked.push(key(kind, obj.id));
+    if (!TT.canWheel(obj) || !TT.isLocked(kind, obj)) return null;
+    const free = (P.freeSpins || 0) > 0;
+    if (!free && P.stitches < cost) return null;
+    const paid = free ? 0 : cost;
+    if (free) P.freeSpins--; else P.stitches -= cost;
+    const space = Math.floor(Math.random() * TT.SPIN_SPACES.length);
+    const outcome = TT.SPIN_SPACES[space];
+    let back = 0;
+    if (outcome === 'win') P.unlocked.push(key(kind, obj.id));
+    if (outcome === 'refund') back = paid;
+    if (outcome === 'half') back = Math.ceil(paid / 2);
+    if (outcome === 'again') P.freeSpins = (P.freeSpins || 0) + 1;
+    P.stitches += back;
     save();
-    return { win };
+    return { space, outcome, win: outcome === 'win', back, paid };
   };
   /* rarity tiers by price, shown on price tags and in the unlock window */
   TT.rarity = n => n >= 220 ? { id: 'legend', name: 'Legendary' } : n >= 150 ? { id: 'super', name: 'Super rare' } : n >= 80 ? { id: 'rare', name: 'Rare' } : { id: 'common', name: 'Common' };

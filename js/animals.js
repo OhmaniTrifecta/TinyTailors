@@ -281,7 +281,21 @@
   };
   TT.MOUTHS = [
     ['cat', 'Kitty smile'], ['smile', 'Smile'], ['open', 'Yay!'], ['tongue', 'Silly'], ['o', 'Ooh'], ['grin', 'Big grin'], ['smirk', 'Smirk'], ['fang', 'Lil fang'], ['frown', 'Grumpy'], ['wobbly', 'Wobbly']
-  ].map(([id, name]) => ({ id, name, draw: (a) => (a && a.mouthY === null) ? '' : mouth[id]((a && a.mouthY) || 210) }));
+  ].map(([id, name]) => ({ id, name, draw: (a) => (a && a.beakMouth) ? beakMouth(id) : (a && a.mouthY === null) ? '' : mouth[id]((a && a.mouthY) || 210) }));
+
+  /* birds whose beak IS the mouth (cockatiel): closed for calm faces, open for happy or surprised ones */
+  function beakMouth(id) {
+    const B = '#dcbcb3', BD = '#b58f86';
+    const upper = (dy = 0) => P(`M186,${190 + dy} Q200,${181 + dy} 214,${190 + dy} Q215,${203 + dy} 203,${213 + dy} Q200,${216 + dy} 198,${212 + dy} Q186,${203 + dy} 186,${190 + dy}Z`, B, 3) + S(`M193,${193 + dy} Q200,${190 + dy} 207,${193 + dy}`, '#f2dcd6', 2.5);
+    if (['open', 'grin', 'o', 'tongue'].includes(id)) {
+      const wide = id === 'grin' ? 9 : id === 'o' ? 6 : 8;
+      return E(200, 214, wide, id === 'o' ? 8 : 7, '#ff8fa8', 3) + (id === 'tongue' ? E(200, 219, 4.5, 3.5, '#ff6f86', 0) : '') +
+        P(`M${200 - wide},214 Q200,${id === 'o' ? 230 : 228} ${200 + wide},214 Q200,221 ${200 - wide},214Z`, BD, 3) + upper(-4);
+    }
+    const lower = P('M192,207 Q200,213 208,207 Q206,217 200,218 Q194,217 192,207Z', BD, 3);
+    const extra = id === 'frown' ? S('M190,224 Q200,219 210,224', '#5b3f58', 2.5) : id === 'smirk' ? S('M204,220 Q210,221 213,217', '#5b3f58', 2.5) : '';
+    return lower + upper() + extra;
+  }
 
   TT.BLUSH = [
     ['rosy', 'Rosy', () => SYM(E(130, 200, 17, 9.5, '#ff9ec0', 0, 'opacity=".8"'))],

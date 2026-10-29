@@ -43,7 +43,7 @@ Most clothes come in **20 colors** (plus a color mixer), a second **trim color**
   - **Critter Catch**: catch falling buttons, spools and stars, and dodge the scissors.
   - **Hide & Seek**: find your critter in a crowd of look-alikes. Later levels change just one piece, or just a color.
   - **Memory Match**: flip cards to match pairs of hats, pets, critters and more (12 or 16 cards).
-- **Lucky wheel**: Rare, Super rare and Legendary items (80+ stitches) can be won on a spinning wheel. A spin costs about 13% of the item's price (10 to 45 stitches), and landing on the gold space (1 in 10 chance) wins it. On average spinning costs a bit more than buying, so it's a lucky shortcut, not a discount.
+- **Lucky wheel**: Rare, Super rare and Legendary items (80+ stitches) can be won on a spinning wheel with 10 spaces: the item, **All back!** (refunds that spin), **Half back**, **Free spin**, and 6 misses, each 1 in 10. A spin costs about 16% of the item's price (15 to 55 stitches); on average spinning still costs a bit more than buying (about 1.2× to 1.4×), so it's a lucky shortcut, not a discount.
 - **Fashion show**: pick 2 to 5 saved looks and they strut the runway to a random song, camera flashes and a cheer meter.
 - **Group photo**: put 2 to 4 saved critters in one picture.
 - **Share codes**: every look turns into a code (and a link like `yoursite.vercel.app/#look=TT1-…`). Friends paste it to wear the exact look, custom fabrics included.

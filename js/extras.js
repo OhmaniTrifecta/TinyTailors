@@ -19,7 +19,7 @@
 
   // critters added later go at the end of the list so old share codes keep working
   TT.ANIMALS.push(
-    A('cockatiel', 'Cockatiel', { tall: 1, fur: '#fff0a8', alt: '#fff9dc', ears: 'crest', marks: ['cockatiel'], muzzle: 'smallbeak', tail: 'longbird', foot: '#f2b6a8', mouthY: 218, locked: 225 })
+    A('cockatiel', 'Cockatiel', { tall: 1, fur: '#fff0a8', alt: '#fff9dc', ears: 'crest', marks: ['cockatiel'], muzzle: 'none', beakMouth: true, tail: 'longbird', foot: '#f2b6a8', mouthY: 218, locked: 225 })
   );
 
   /* ---------- tops ---------- */
