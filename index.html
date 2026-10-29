@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Sniglet:wght@400;800&display=swap">
-  <link rel="stylesheet" href="style.css?v=20261029k">
+  <link rel="stylesheet" href="style.css?v=20261029n">
 </head>
 <body>
 <!--BODY-START-->
@@ -49,12 +49,16 @@
         <button class="chip" id="redo" type="button" aria-label="Redo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 7 5 5-5 5M20 12H10a6 6 0 0 0 0 12h2" transform="translate(0 -3)"/></svg><span>Redo</span></button>
         <button class="chip" id="challengeBtn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg><span>Challenge</span></button>
         <button class="chip games-chip" id="gamesBtn" type="button" aria-label="Games"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8h10a4 4 0 0 1 4 4v2.5a2.5 2.5 0 0 1-4.6 1.4L15 14H9l-1.4 1.9A2.5 2.5 0 0 1 3 14.5V12a4 4 0 0 1 4-4z"/><path d="M8 10.5v3M6.5 12h3"/><circle cx="15.5" cy="11" r=".6"/><circle cx="17" cy="13" r=".6"/></svg><span>Games</span></button>
+        <button class="chip town-chip" id="townBtn" type="button" aria-label="Town: event, tailor shop, critter house and sticker album"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-5h4v5"/></svg><span>Town</span></button>
         <button class="chip" id="closetBtn" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6a2 2 0 1 1 2 2c-1 0-2 .8-2 2l9 6c.8.6.4 2-.6 2H3.6c-1 0-1.4-1.4-.6-2l9-6"/></svg><span>Closet <b id="closetCount">0</b></span></button>
         <button class="chip icon-only" id="soundBtn" type="button" aria-label="Sound" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path class="wave" d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg></button>
         <div class="menu-wrap">
           <button class="chip icon-only" id="menuBtn" type="button" aria-label="More" aria-haspopup="true" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14"/></svg></button>
           <div class="menu" id="menu" hidden role="menu">
             <button type="button" role="menuitem" data-menu="games">Play games</button>
+            <button type="button" role="menuitem" data-menu="town">Town</button>
+            <button type="button" role="menuitem" data-menu="album">Sticker album</button>
+            <button type="button" role="menuitem" data-menu="sound" class="menu-sound">Sound on/off</button>
             <button type="button" role="menuitem" data-menu="secret">Secret code</button>
             <button type="button" role="menuitem" data-menu="suggest">Suggest an idea</button>
             <button type="button" role="menuitem" data-menu="share">Share &amp; codes</button>
@@ -83,6 +87,8 @@
         <div class="stage" id="stageCard">
           <svg id="stage" viewBox="0 0 400 460" role="img" aria-label="Your dressed-up critter"></svg>
           <div id="toast" class="toast" role="status" aria-live="polite"></div>
+          <div id="say" class="say" aria-live="polite"></div>
+          <button class="event-ribbon" id="eventRibbon" type="button" hidden></button>
           <button class="size-hint" id="sizeBtn" type="button" aria-label="Show my critter full screen" title="Full screen"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
         </div>
         <div class="stage-actions">
@@ -198,23 +204,31 @@
     </div>
   </div>
 <!--BODY-END-->
-  <script src="js/core.js?v=20261029k"></script>
-  <script src="js/animals.js?v=20261029k"></script>
-  <script src="js/wardrobe-clothes.js?v=20261029k"></script>
-  <script src="js/wardrobe-accessories.js?v=20261029k"></script>
-  <script src="js/world.js?v=20261029k"></script>
-  <script src="js/extras.js?v=20261029k"></script>
-  <script src="js/render.js?v=20261029k"></script>
-  <script src="js/challenges.js?v=20261029k"></script>
-  <script src="js/progress.js?v=20261029k"></script>
-  <script src="js/fabric.js?v=20261029k"></script>
-  <script src="js/share.js?v=20261029k"></script>
-  <script src="js/sound.js?v=20261029k"></script>
-  <script src="js/songs.js?v=20261029k"></script>
-  <script src="js/show.js?v=20261029k"></script>
-  <script src="js/paperdoll.js?v=20261029k"></script>
-  <script src="js/games.js?v=20261029k"></script>
-  <script src="js/games2.js?v=20261029k"></script>
-  <script src="js/app.js?v=20261029k"></script>
+  <script src="js/core.js?v=20261029n"></script>
+  <script src="js/animals.js?v=20261029n"></script>
+  <script src="js/wardrobe-clothes.js?v=20261029n"></script>
+  <script src="js/wardrobe-accessories.js?v=20261029n"></script>
+  <script src="js/world.js?v=20261029n"></script>
+  <script src="js/extras.js?v=20261029n"></script>
+  <script src="js/render.js?v=20261029n"></script>
+  <script src="js/challenges.js?v=20261029n"></script>
+  <script src="js/progress.js?v=20261029n"></script>
+  <script src="js/events.js?v=20261029n"></script>
+  <script src="js/opinions.js?v=20261029n"></script>
+  <script src="js/play.js?v=20261029n"></script>
+  <script src="js/album.js?v=20261029n"></script>
+  <script src="js/fabric.js?v=20261029n"></script>
+  <script src="js/share.js?v=20261029n"></script>
+  <script src="js/sound.js?v=20261029n"></script>
+  <script src="js/songs.js?v=20261029n"></script>
+  <script src="js/show.js?v=20261029n"></script>
+  <script src="js/paperdoll.js?v=20261029n"></script>
+  <script src="js/games.js?v=20261029n"></script>
+  <script src="js/games2.js?v=20261029n"></script>
+  <script src="js/photobooth.js?v=20261029n"></script>
+  <script src="js/career.js?v=20261029n"></script>
+  <script src="js/house.js?v=20261029n"></script>
+  <script src="js/town.js?v=20261029n"></script>
+  <script src="js/app.js?v=20261029n"></script>
 </body>
 </html>

@@ -39,6 +39,8 @@
     { id: 'memory', name: 'Memory Match', blurb: 'Flip cards to find matching pairs.', color: '#ffe0cc' }
   ];
 
+  TT.GAME_LIST = GAMES; // the sticker album reads this (games2.js adds more)
+
   /* ================= shell ================= */
   let root = null, ctx = null, timers = [], gen = 0, keyHandler = null, cleanup = [];
   const later = (fn, ms) => { const t = setTimeout(fn, ms); timers.push(t); return t; };

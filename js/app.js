@@ -105,9 +105,11 @@
     const pressed = it ? e.id === it.id : !e.id;
     const fav = it && TT.isFav(slot, it.id);
     const label = it ? it.name : 'None';
-    return `<button class="item${extra}${locked ? ' is-locked' : ''}" data-act="item" data-slot="${slot}" data-val="${it ? it.id : ''}" aria-pressed="${pressed}"
-      aria-label="${esc(label)}${locked ? `, locked, ${it.locked} stitches` : ''}">${TT.thumb(slot, it, state)}<span>${esc(label)}</span>
-      ${locked ? priceTag(it.locked) : ''}${fav ? '<i class="fav-badge" aria-hidden="true">★</i>' : ''}</button>`;
+    const ev = it && it.event ? TT.eventById(it.event) : null;
+    const away = ev && locked && !TT.eventOpen(it.event);
+    return `<button class="item${extra}${locked ? ' is-locked' : ''}${away ? ' is-away' : ''}" data-act="item" data-slot="${slot}" data-val="${it ? it.id : ''}" aria-pressed="${pressed}"
+      aria-label="${esc(label)}${away ? `, comes back in ${TT.MONTHS[ev.month]}` : locked ? `, locked, ${it.locked} stitches` : ''}">${TT.thumb(slot, it, state)}<span>${esc(label)}</span>
+      ${away ? `<span class="price away">${TT.MONTHS[ev.month].slice(0, 3)}</span>` : locked ? priceTag(it.locked) : ''}${ev ? `<i class="ev-badge" aria-hidden="true">${ev.emoji}</i>` : ''}${fav ? '<i class="fav-badge" aria-hidden="true">★</i>' : ''}</button>`;
   }
   function swatch(slot, which, p) {
     const e = state[slot];
@@ -222,6 +224,7 @@
     renderStage(opts.pop !== false);
     if (opts.drawer !== false) renderDrawer();
     if (opts.tabs) renderTabs();
+    if (TT.albumTrackLook) TT.albumTrackLook(state);
   }
   function renderWallet(bump) {
     $('#stitchCount').textContent = PR.stitches;
@@ -297,6 +300,15 @@
   /* ---------------- unlocking ---------------- */
   let pendingUnlock = null;
   function askUnlock(kind, obj, apply, preview) {
+    if (obj.event && !TT.eventOpen(obj.event)) {
+      const ev = TT.eventById(obj.event);
+      pendingUnlock = null;
+      sheet('Event item', `<div class="unlock"><div class="unlock-art">${preview || ''}</div>
+        <div><span class="rarity r-common">${ev.emoji} ${esc(ev.name)}</span><p class="unlock-name">${esc(obj.name)}</p>
+        <p class="modal-sub">This is a ${esc(ev.name)} item. It comes back in <b>${TT.MONTHS[ev.month]}</b>, when you can win it in the event challenges or buy it in the event shop.</p>
+        <button class="btn-soft" type="button" data-gotown>See this month's event</button></div></div>`, 'unlock-card');
+      return;
+    }
     pendingUnlock = { kind, obj, apply, preview };
     const can = PR.stitches >= obj.locked;
     sheet('Unlock it?', `<div class="unlock">
@@ -306,6 +318,7 @@
       ${can ? `<button class="btn-big" type="button" data-unlock>Unlock for ${obj.locked} stitches</button>`
         : `<p class="modal-sub">You need ${obj.locked - PR.stitches} more stitches. Save up by doing style challenges (the daily one pays double!), games, fashion shows and photos. ${obj.locked - PR.stitches > 90 ? 'Special things take a few days to save for!' : ''}</p><button class="btn-soft" type="button" data-gochallenge>Do a challenge</button>`}
       </div></div>
+      ${obj.event ? `<p class="modal-sub ev-note">${TT.eventById(obj.event).emoji} Event item: only until the end of ${TT.MONTHS[TT.eventById(obj.event).month]}. Or win it free in an event challenge!</p>` : ''}
       ${TT.canWheel(obj) ? `<div class="spin-offer">${WHEEL_ICON}<div><b>Feeling lucky?</b> Spin the wheel for ${TT.spinCost(obj)} stitches. If it lands on ${esc(obj.name)}, it's yours! <span>(1 in 10 chance, plus spaces that give stitches back or a free spin)</span></div>
         <button class="btn-soft" type="button" data-wheel>Spin the wheel</button></div>` : ''}`, 'unlock-card');
   }
@@ -432,7 +445,7 @@
   function setChallenge(ch, daily) {
     challenge = { ch, daily };
     $('#challengeText').textContent = ch.text;
-    $('#challengeLabel').innerHTML = daily ? `Daily challenge${PR.streak ? ` · <span class="streak">🔥 ${PR.streak}-day streak</span>` : ''}${TT.dailyDone() ? ' · done today ✓' : ''}` : 'Style challenge';
+    $('#challengeLabel').innerHTML = ch.prize ? `${TT.currentEvent().emoji} Event challenge` : daily ? `Daily challenge${PR.streak ? ` · <span class="streak">🔥 ${PR.streak}-day streak</span>` : ''}${TT.dailyDone() ? ' · done today ✓' : ''}` : 'Style challenge';
     $('#challenge').hidden = false;
     $('#challenge').classList.toggle('daily', !!daily);
   }
@@ -442,14 +455,25 @@
         <span class="daily-tag">Today's daily challenge · pays double</span>
         <strong>${esc(d.text)}</strong>
         <span>${TT.dailyDone() ? 'Done today ✓ (you can still improve your score)' : `Keep your streak going${PR.streak ? `: 🔥 ${PR.streak} days` : '!'}`}</span></button>
+      ${eventChallengeCards()}
       <div class="row-label">Or pick any challenge</div>
       <div class="ch-list">${TT.CHALLENGES.map(c => `<button class="mini ch-pick" type="button" data-pick="${c.id}">${esc(c.text)}</button>`).join('')}</div>
       <button class="btn-soft" type="button" data-pickrandom>Surprise challenge</button>`, 'wide-card');
+  }
+  function eventChallengeCards() {
+    const ev = TT.currentEvent();
+    const chs = TT.eventChallenges(ev.id);
+    if (!chs.length) return '';
+    const es = TT.eventState(ev.id);
+    return `<div class="row-label">${ev.emoji} ${esc(ev.name)} <em>· ${TT.daysLeftInMonth()} days left · 4 stars wins the prize</em></div>
+      <div class="ch-list">${chs.map(c => `<button class="mini ch-pick ev-pick" type="button" data-pickev="${c.id}" style="--ev:${ev.color}">${ev.emoji} ${esc(c.text)}${es.prizes.includes(c.id) ? ' ✓' : ''}</button>`).join('')}</div>`;
   }
   function judgeNow() {
     if (!challenge) return;
     const res = TT.judge(state, challenge.ch);
     const rw = TT.rewardChallenge(challenge.ch.id, res.stars, challenge.daily);
+    const prize = TT.eventJudged(challenge.ch, res.stars);
+    const isEvent = !!challenge.ch.prize;
     const words = ['', 'Good start!', 'Getting there!', 'Stylish!', 'Fabulous!', 'Perfect match!'][res.stars];
     sheet('The judge says…', `<div class="score">
       <div class="stars" aria-label="${res.stars} out of 5 stars">${'★'.repeat(res.stars)}<span>${'★'.repeat(5 - res.stars)}</span></div>
@@ -458,8 +482,11 @@
       <ul class="score-lines">${res.lines.map(l => `<li class="${l.good ? 'ok' : 'tip'}"><span>${l.good ? '✓' : '✎'}</span><div>${esc(l.msg)}</div><b>${l.pts}/${l.w}</b></li>`).join('')}</ul>
       <p class="score-earn">${rw.earned ? `${SPOOL} +${rw.earned} stitches` : ''}${rw.streakUp ? ` · 🔥 ${rw.streak}-day streak!` : ''}</p>
       ${earnNote(rw, challenge.daily)}
+      ${prize && !prize.had ? `<div class="ev-won">${TT.thumb(prize.slot, prize.item, state)}<div><b>You won the ${esc(prize.item.name)}!</b><span>It's yours to keep forever.</span><button class="btn-soft" type="button" data-wearprize="${prize.slot}:${prize.item.id}">Wear it!</button></div></div>` : ''}
+      ${isEvent && !prize && res.stars < 4 && !TT.eventState(TT.currentEvent().id).prizes.includes(challenge.ch.id) ? `<p class="score-note">Get 4 stars or more to win the ${esc((TT.itemOf(challenge.ch.prize[0], challenge.ch.prize[1]) || {}).name || 'prize')}!</p>` : ''}
       <div class="score-actions"><button class="btn-soft" type="button" data-close>Keep styling</button><button class="btn-big" type="button" data-newch>New challenge</button></div></div>`, 'score-card');
     if (res.stars >= 4) { Sound.cheer(); celebrate('confetti'); } else Sound.sparkle();
+    if (prize) { renderDrawer(); renderTabs(); }
     if (rw.earned) renderWallet(true);
     if (challenge.daily) setChallenge(challenge.ch, true);
   }
@@ -536,11 +563,15 @@
       TT.runFashionShow(looks, { onEnd: n => { if (n) renderWallet(true); } });
     } else {
       const inner = TT.groupPhotoSVG(looks, looks[0].scene.id);
-      photoFrom(inner, 600, 460, looks.map(l => l.name || 'Pal').join(' & ').slice(0, 40), 'group');
+      booth(inner, 600, 460, looks.map(l => l.name || 'Pal').join(' & ').slice(0, 40), 'group');
     }
   }
 
-  /* ---------------- photos ---------------- */
+  /* ---------------- photos (through the photo booth first) ---------------- */
+  function booth(inner, vw, vh, caption, kind) {
+    if (!TT.openBooth) return photoFrom(inner, vw, vh, caption, kind);
+    TT.openBooth({ inner, vw, vh, caption, onDone: (finalInner) => photoFrom(finalInner, vw, vh, caption, kind) });
+  }
   async function photoFrom(inner, vw, vh, caption, kind) {
     Sound.shutter();
     $('#stageCard').animate([{ filter: 'brightness(1.8)' }, { filter: 'none' }], { duration: 350 });
@@ -617,12 +648,18 @@
       drag.cur = { x: Math.round(x), y: Math.round(y) }; drag.moved = true;
       drag.g.setAttribute('transform', `translate(${drag.cur.x} ${drag.cur.y})`);
     });
+    let dragged = false;
     const end = () => {
       if (!drag) return;
-      if (drag.moved && drag.cur) { state.petPos = drag.cur; Sound.pop(); commit({ drawer: false, pop: false }); }
+      if (drag.moved && drag.cur) { state.petPos = drag.cur; Sound.pop(); commit({ drawer: false, pop: false }); dragged = true; setTimeout(() => { dragged = false; }, 50); }
       drag = null;
     };
     svg.addEventListener('pointerup', end); svg.addEventListener('pointercancel', end);
+    svg.addEventListener('click', e => {
+      if (dragged || danceTimer) return;
+      const p = toSvg(e);
+      stageTap(p.x, p.y, e.target);
+    });
   }
 
   /* ---------------- share ---------------- */
@@ -761,6 +798,74 @@
       onClose: () => { renderWallet(); renderDrawer(); $('#gamesBtn').focus({ preventScroll: true }); } });
   }
 
+  /* ---------------- town: event, tailor shop, critter house, sticker album ---------------- */
+  function openTown(page) {
+    stopDanceIf();
+    TT.openTown({ look: () => clone(state), wallet: () => renderWallet(true), closet: () => closet.map(clone),
+      saveLook: (look, done) => addToCloset(look, done),
+      startChallenge: ch => { setChallenge(ch, false); toast(`${TT.currentEvent().emoji} ${ch.text}`); },
+      wear: (slot, id) => wearItem(slot, id),
+      onClose: () => { renderWallet(); renderDrawer(); renderTabs(); renderEventRibbon(); $('#townBtn').focus({ preventScroll: true }); } }, page);
+  }
+  function wearItem(slot, id) {
+    const it = TT.itemOf(slot, id); if (!it) return;
+    const tab = TABS.find(t => t.slots.includes(slot));
+    if (tab) { activeTab = tab.id; store.set('tinytailors.tab', activeTab); }
+    if (lockedItem(slot, it)) { renderTabs(); renderDrawer(); return askUnlock(kindOf(slot), it, () => applyItem(slot, id), TT.thumb(slot, it, state)); }
+    applyItem(slot, id); renderTabs();
+  }
+  function renderEventRibbon() {
+    const ev = TT.currentEvent(), b = $('#eventRibbon');
+    if (!b) return;
+    b.hidden = !ev.ready;
+    b.innerHTML = `<span aria-hidden="true">${ev.emoji}</span><span class="txt">${esc(ev.name)}</span>`;
+    b.setAttribute('aria-label', `${ev.name}: this month's event`);
+    b.style.setProperty('--ev', ev.color);
+  }
+
+  /* ---------------- critters talk, scenes react ---------------- */
+  let sayTimer = null;
+  function sayLine(text, kind) {
+    const el = $('#say'); if (!el || !text) return;
+    el.textContent = text; el.className = 'say show' + (kind ? ' ' + kind : '');
+    clearTimeout(sayTimer); sayTimer = setTimeout(() => { el.className = 'say'; }, Math.min(5200, 1600 + text.length * 45));
+    if (PR.settings.speak) Sound.say(text);
+  }
+  function jump(cls = 'jump') {
+    const g = $('#st-critter'); if (!g) return;
+    g.classList.remove('jump', 'wiggle'); void g.getBoundingClientRect(); g.classList.add(cls);
+    setTimeout(() => g.classList.remove(cls), 700);
+  }
+  function react(slot, id) {
+    const r = TT.reactTo(state, slot, id);
+    if (!r) return null;
+    sayLine(r.line, r.kind);
+    setTimeout(() => jump(r.kind === 'nope' ? 'wiggle' : 'jump'), 30);
+    if (r.kind === 'super') { celebrate('hearts'); Sound.cheer(); }
+    return r;
+  }
+  function stageTap(x, y, target) {
+    const svg = $('#stage');
+    if (target.closest('#st-pet')) {
+      const g = $('#st-pet .pet, #st-pet .pet-float'); Sound.pop();
+      if (g) { g.style.animation = 'none'; void g.getBoundingClientRect(); g.style.animation = ''; }
+      addBurst(svg, TT.tapBurst('hearts', x, y - 20));
+      return;
+    }
+    if (target.closest('#st-critter')) { Sound.pop(); jump(); sayLine(TT.tapLine(state)); return; }
+    const res = TT.sceneTap(state.scene.id, x, y);
+    addBurst(svg, res.burst); Sound.tap();
+    if (res.secret) {
+      addBurst(svg, TT.secretArt(res.secret), 2800);
+      if (res.secret.isNew) {
+        const n = TT.secretCount();
+        Sound.cheer(); toast(`You found ${res.secret.friend.name}! Secret ${n.got} of ${n.total} 🔍`);
+        TT.albumPing();
+      } else { Sound.sparkle(); toast(`Hi again, ${res.secret.friend.name.replace(/^an? /, 'little ')}!`); }
+    }
+  }
+  function addBurst(svg, html, ms = 1800) { svg.insertAdjacentHTML('beforeend', html); const g = svg.lastElementChild; setTimeout(() => g && g.remove(), ms); }
+
   /* ---------------- suggest an idea ---------------- */
   const IDEA_KINDS = [['critter', 'A critter'], ['clothes', 'Clothes'], ['accessory', 'Hat or accessory'], ['pet', 'A pet pal'], ['scene', 'A scene'], ['challenge', 'A challenge'], ['other', 'Something else']];
   function openSuggest() {
@@ -826,6 +931,7 @@
     Sound.wake(); Sound.whoosh();
     $('#title').hidden = true; $('#app').hidden = false;
     renderTabs(); renderDrawer(); renderStage(true); renderCloset(); renderWallet(); measurePins();
+    if (TT.albumTrackLook) TT.albumTrackLook(state);
     if (!store.get('tinytailors.welcomed', false)) {
       store.set('tinytailors.welcomed', true);
       setTimeout(() => toast(`You have ${PR.stitches} stitches to start. Save up for 🔒 goodies!`), 900);
@@ -837,8 +943,9 @@
     if (slot === 'pose') { state.pose = { id: val }; }
     else state[slot].id = val || null;
     const it = val ? TT.itemOf(slot, val) : null;
-    if (PR.settings.speak) Sound.say(it ? it.name : 'none');
     Sound.pop(); commit({ tabs: slot === 'animal' });
+    const r = val ? react(slot, val) : null;
+    if (PR.settings.speak && !r) Sound.say(it ? it.name : 'none');
   }
   function bind() {
     $('#play').addEventListener('click', startStudio);
@@ -936,7 +1043,7 @@
         <button class="btn-big" type="button" data-gochallenge>Earn stitches now</button>`);
     });
 
-    $('#photo').addEventListener('click', () => photoFrom(TT.compose(state, { pfx: 'ph-', animated: false }), 400, 460, state.name || 'My critter', 'photo'));
+    $('#photo').addEventListener('click', () => { stopDanceIf(); booth(TT.compose(state, { pfx: 'ph-', animated: false }), 400, 460, state.name || 'My critter', 'photo'); });
     $('#save').addEventListener('click', () => {
       addToCloset(clone(state), (saved, ok, swapped) => {
         if (!saved) return;
@@ -968,6 +1075,9 @@
       $('#menu').hidden = true;
       const k = b.dataset.menu;
       if (k === 'games') openGames();
+      if (k === 'town') openTown();
+      if (k === 'album') openTown('album');
+      if (k === 'sound') $('#soundBtn').click();
       if (k === 'secret') openSecret();
       if (k === 'suggest') openSuggest();
       if (k === 'share') openShare();
@@ -990,6 +1100,9 @@
       if (t.closest('[data-gochallenge]')) { closeModal($('#sheet')); return openChallengePicker(); }
       if (t.closest('[data-pickdaily]')) { setChallenge(TT.dailyChallenge(), true); closeModal($('#sheet')); Sound.tap(); return; }
       const pk = t.closest('[data-pick]'); if (pk) { setChallenge(TT.CHALLENGES.find(c => c.id === pk.dataset.pick), false); closeModal($('#sheet')); Sound.tap(); return; }
+      const pe = t.closest('[data-pickev]'); if (pe) { setChallenge(TT.eventChallenges(TT.currentEvent().id).find(c => c.id === pe.dataset.pickev), false); closeModal($('#sheet')); Sound.tap(); return; }
+      const wp = t.closest('[data-wearprize]'); if (wp) { const [sl, id] = wp.dataset.wearprize.split(':'); closeModal($('#sheet')); return wearItem(sl, id); }
+      if (t.closest('[data-gotown]')) { closeModal($('#sheet')); return openTown('event'); }
       if (t.closest('[data-pickrandom]')) { setChallenge(pick(TT.CHALLENGES), false); closeModal($('#sheet')); Sound.tap(); return; }
       if (t.closest('[data-newch]')) { closeModal($('#sheet')); return openChallengePicker(); }
       const cp = t.closest('[data-copy]');
@@ -1030,6 +1143,8 @@
       const a = e.target.closest('[data-dollact]'); if (a) return dollAction(a.dataset.dollact);
     });
     $('#gamesBtn').addEventListener('click', openGames);
+    $('#townBtn').addEventListener('click', () => openTown());
+    $('#eventRibbon').addEventListener('click', () => openTown('event'));
     $('#challengeBtn').addEventListener('click', openChallengePicker);
     $('#challengeDone').addEventListener('click', judgeNow);
     $('#challengeNew').addEventListener('click', openChallengePicker);
@@ -1083,6 +1198,8 @@
     if (window.visualViewport) window.visualViewport.addEventListener('resize', measurePins);
     if (window.ResizeObserver) { const ro = new ResizeObserver(measurePins); ro.observe(document.querySelector('.bar')); ro.observe($('#stageRow')); }
     applySettings();
+    renderEventRibbon();
+    TT.albumNotify = fresh => { if (!$('#app').hidden) toast(fresh.length > 1 ? `📒 ${fresh.length} new stickers in your album!` : `📒 New sticker: ${fresh[0].name}!`); };
     $('#looksCount').textContent = TT.bigWords(TT.countLooks());
     renderParade();
     bind();
@@ -1093,5 +1210,5 @@
     else if (location.hash === '#doll' || location.hash === '#view') { try { window.history.replaceState(null, '', location.pathname + location.search); } catch (e) { } }
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
-  TT.app = { get state() { return state; }, set state(v) { state = sanitize(v); commit({ force: true, tabs: true }); }, randomLook, sanitize, judgeNow, setChallenge };
+  TT.app = { get state() { return state; }, set state(v) { state = sanitize(v); commit({ force: true, tabs: true }); }, randomLook, sanitize, judgeNow, setChallenge, openTown, wearItem };
 })(window.TT);

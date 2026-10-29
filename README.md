@@ -56,6 +56,14 @@ Most clothes come in **20 colors** (plus a color mixer), a second **trim color**
   - **Game stitches**: reward = the bigger of 1 or base × 0.7ⁿ, where base is set by stars (1★ 2, 2★ 4, 3★ 7, 4★ 10, 5★ 12) and n is how many times that same game already paid today. So a 5-star game pays 12, 8, 6, 4, 3, 2, 1, 1… and a different game pays full again. No daily limit on games. (Style challenges, the daily challenge, fashion shows and photos keep their own daily rules.)
 - **Lucky wheel**: Rare, Super rare and Legendary items (80+ stitches) can be won on a spinning wheel with 10 spaces: the item, **All back!** (refunds that spin), **Half back**, **Free spin**, and 6 misses, each 1 in 10. A spin costs about 16% of the item's price (15 to 55 stitches); on average spinning still costs a bit more than buying (about 1.2× to 1.4×), so it's a lucky shortcut, not a discount.
 - **Secret codes** (Menu → Secret code): type a secret word to win stitches, or one special code that unlocks everything. Each code works once per device. The codes are stored scrambled (SHA-256), so they can't be read from the app's files; the owner keeps the list.
+- **Monthly events** (the 🎃 ribbon on the stage, or **Town**): a new theme every month, each with its own scene, items, event challenges, photo booth stickers and frame, house furniture and an album page. Event items can only be won (4 stars in an event challenge) or bought during their month; you keep them forever and the event comes back next year. Live now: 🎃 Monster Masquerade (October) and 🍂 Cozy Harvest (November). Coming: ❄️ Ice Palace Snow Day, 💗 Sweetheart Bakery, 🌈 Rainbow Lucky Clover, 🌷 Rainy Day Garden Party, 🫖 Fairy Tea Party, 🐚 Beach Bash, 🏕️ Camp Critter, 🚀 Galaxy Explorers, 🎒 School Spirit Week, 🎁 Twinkle Toy Workshop.
+- **Critters with opinions**: every critter loves two kinds of things, isn't a fan of one, and has a favorite color. It reacts in a speech bubble as you dress it (a happy jump or a little wiggle). Tap your critter to hear what it likes. Three loved things and nothing it dislikes makes it **super happy**.
+- **Interactive scenes**: tap the scene and it reacts (bubbles under the sea, snow puffs, popping flowers, bats in the pumpkin patch…). Tap your pet for hearts. Every scene hides a tiny friend somewhere: find them all!
+- **Photo booth**: before a photo is saved, add stickers and speech bubbles (or type your own words) and pick a frame. Drag stickers around, make them bigger or smaller, or turn them.
+- **Town** (the 🏠 button): the monthly event, the tailor shop, the critter house and the sticker album.
+  - **Tailor shop career**: run your own shop. Customers come in with a wish (and their own likes and dislikes), you dress them, and they pay tips 🪙 and ★ reputation. Spend tips on shop upgrades (style notebook, bigger rack, more drawers, dye station, speedy sewing machine, comfy chairs, window display, golden mirror, shop paint), name your shop, and read your reviews. 5-star looks hang on your wall of fame. Climb 8 ranks from Apprentice to Royal Tailor; each rank needs reputation and a pass (4 stars) on the Royal Inspector's test, and brings harder customers: color wishes 🎨, "no hats please" 🚫, rush orders ⏱️, VIPs 👑, double wishes and superstars. Six regulars (Duchess Pickles, Captain Bao, Professor Fig, Rosie Rumble, Sir Sprout and Princess Nova) each have a 4-chapter story and give a gift for your house at the end.
+  - **Critter house**: decorate rooms (bedroom, living room and garden free; kitchen, playroom and star loft to unlock) with 50+ pieces of furniture, 8 wallpapers with patterns and 6 floors, then invite your saved critters to move in. Drag anything; tap to paint, flip, resize, bring to front or put away. Critters chat about furniture they love.
+  - **Sticker album**: about 200 stickers on pages for critters, super happy critters, the wardrobe, games, challenges, scene secrets, the tailor career, the critter house and each monthly event. A full page pays a one-time stitch prize.
 - **Fashion show**: pick 2 to 5 saved looks and they strut the runway to a random song, camera flashes and a cheer meter.
 - **Group photo**: put 2 to 4 saved critters in one picture.
 - **Share codes**: every look turns into a code (and a link like `yoursite.vercel.app/#look=TT1-…`). Friends paste it to wear the exact look, custom fabrics included.
@@ -137,6 +145,14 @@ js/show.js                 fashion show and group photos
 js/games.js                the games window and the first six games
 js/games2.js               ten more games (Fabric Match … Design Contest)
 js/paperdoll.js            printable paper doll and coloring page
+js/events.js               monthly events: the calendar, event items, scenes and challenges
+js/opinions.js             what each critter loves and dislikes, and what it says
+js/play.js                 tap reactions for scenes and the hidden friend in each scene
+js/album.js                the sticker album
+js/photobooth.js           stickers, words and frames for photos
+js/career.js               the tailor shop career
+js/house.js                the critter house and its furniture
+js/town.js                 the Town window (event page and the hub)
 js/app.js                  buttons, drawers, closet, everything you tap
 ```
 
