@@ -321,12 +321,13 @@
   }
 
   /* ---------------- lucky wheel ---------------- */
-  const WHEEL_ICON = TT.svg([0, 1, 2, 3, 4, 5, 6, 7].map(i => `<path d="M0,0 L${(30 * Math.sin(i * Math.PI / 4)).toFixed(1)},${(-30 * Math.cos(i * Math.PI / 4)).toFixed(1)} A30,30 0 0 1 ${(30 * Math.sin((i + 1) * Math.PI / 4)).toFixed(1)},${(-30 * Math.cos((i + 1) * Math.PI / 4)).toFixed(1)}Z" fill="${['#ff9ec0', '#ffe17a', '#9ee6c0', '#cfa8ff'][i % 4]}" stroke="#5b3f58" stroke-width="2.5"/>`).join('') + TT.C(0, 0, 7, '#fffdf9', 3) + '<path d="M-6,-38 L6,-38 L0,-26Z" fill="#e64f7c" stroke="#5b3f58" stroke-width="2.5" stroke-linejoin="round"/>', '-36 -42 72 78', 'class="wheel-ic" aria-hidden="true"');
+  const WHEEL_ICON = TT.svg([0, 1, 2, 3, 4, 5, 6, 7].map(i => `<path d="M0,0 L${(30 * Math.sin(i * Math.PI / 4)).toFixed(1)},${(-30 * Math.cos(i * Math.PI / 4)).toFixed(1)} A30,30 0 0 1 ${(30 * Math.sin((i + 1) * Math.PI / 4)).toFixed(1)},${(-30 * Math.cos((i + 1) * Math.PI / 4)).toFixed(1)}Z" fill="${['#4fcf8e', '#ff7d8c', '#8fe6b4', '#ff9aa6'][i % 4]}" stroke="#5b3f58" stroke-width="2.5"/>`).join('') + TT.C(0, 0, 7, '#fffdf9', 3) + '<path d="M-6,-38 L6,-38 L0,-26Z" fill="#e64f7c" stroke="#5b3f58" stroke-width="2.5" stroke-linejoin="round"/>', '-36 -42 72 78', 'class="wheel-ic" aria-hidden="true"');
   // the 10 spaces, in the same order as TT.SPIN_SPACES: item, misses and three bonus spaces
   const MISS_WORDS = ['Oops!', 'So close!', 'Aww!', 'Almost!', 'Oh no!', 'Next time'];
-  const MISS_COLS = ['#ff9ec0', '#cfa8ff', '#ffb38a', '#ff9ec0', '#cfa8ff', '#ffb38a'];
-  const BONUS = { refund: { t: 'All back!', c: '#7fdcb4' }, half: { t: 'Half back', c: '#9cd3ff' }, again: { t: 'Free spin', c: '#b8a6ff' } };
-  const wheelSpaces = () => { let m = 0; return TT.SPIN_SPACES.map(k => k === 'miss' ? { k, t: MISS_WORDS[m], c: MISS_COLS[m++] } : k === 'win' ? { k, c: '#ffe17a' } : Object.assign({ k }, BONUS[k])); };
+  // green = good spaces, red = misses
+  const MISS_COLS = ['#ff7d8c', '#ff9aa6', '#ff7d8c', '#ff9aa6', '#ff7d8c', '#ff9aa6'];
+  const BONUS = { refund: { t: 'All back!', c: '#8fe6b4' }, half: { t: 'Half back', c: '#b5efc9' }, again: { t: 'Free spin', c: '#8fe6b4' } };
+  const wheelSpaces = () => { let m = 0; return TT.SPIN_SPACES.map(k => k === 'miss' ? { k, t: MISS_WORDS[m], c: MISS_COLS[m++] } : k === 'win' ? { k, c: '#4fcf8e' } : Object.assign({ k }, BONUS[k])); };
   let wheelAngle = 0, wheelBusy = false;
   const pt = (deg, r) => { const a = deg * Math.PI / 180; return `${(r * Math.sin(a)).toFixed(2)},${(-r * Math.cos(a)).toFixed(2)}`; };
   function wheelPrizeArt(kind, obj, preview) {
@@ -359,7 +360,7 @@
       <div class="wheel-box">${wheelSVG(kind, obj, pendingUnlock.preview)}</div>
       <div class="wheel-side">
         <p class="wheel-for">Spin to win</p><p class="unlock-name">${esc(obj.name)}</p>
-        <p class="modal-sub">${TT.spinCost(obj)} stitches a spin. Land on the gold space and it's yours (1 in 10 chance). Green gives all your stitches back, blue gives half back, and purple is a free spin!</p>
+        <p class="modal-sub">${TT.spinCost(obj)} stitches a spin. Green spaces are good: the one with ${esc(obj.name)} wins it, and the others give your stitches back, half back, or a free spin. Red spaces are misses.</p>
         <p class="wheel-msg" id="wheelMsg" role="status" aria-live="polite"></p>
         <div class="wheel-actions" id="wheelActions"></div>
       </div></div>`, 'wide-card wheel-card');

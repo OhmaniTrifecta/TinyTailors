@@ -798,7 +798,8 @@ body.gaming { overflow: hidden; }
 /* lucky wheel */
 .spin-offer { display: grid; grid-template-columns: 54px 1fr auto; gap: 12px; align-items: center; margin-top: 14px; padding: 10px 12px;
   background: #fff6d6; border: 2.5px dashed var(--ink-soft); border-radius: 18px; font-weight: 600; line-height: 1.3; }
-.spin-offer span { color: var(--ink-soft); white-space: nowrap; }
+.spin-offer > div { min-width: 0; overflow-wrap: anywhere; }
+.spin-offer span { color: var(--ink-soft); }
 .spin-offer .btn-soft { white-space: nowrap; }
 .wheel-ic { width: 54px; height: 58px; }
 .wheel-wrap { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 18px; align-items: center; }
