@@ -500,6 +500,33 @@
       ${closetMode ? (n >= 0 ? `<i class="pick-num">${n + 1}</i>` : '') : `<button class="del" data-del="${i}" type="button" aria-label="Remove ${esc(s.name || 'this look')}">✕</button>`}</div>`;
     }).join('');
   }
+  /* save a look; if the closet is full (30), the player picks which look to take out (or cancels) */
+  const CLOSET_MAX = 30;
+  let pendingSave = null;
+  function addToCloset(look, done) {
+    look = sanitize(look);
+    if (closet.length < CLOSET_MAX) { closet.unshift(look); const ok = store.set(closetKey, closet); renderCloset(); done && done(true, ok); return; }
+    pendingSave = { look, done };
+    const inGame = !!document.querySelector('.game');
+    sheet('Your closet is full!', `<p class="modal-sub">It holds ${CLOSET_MAX} looks. Tap the one to take out so <b>${esc(look.name || 'your new look')}</b> can move in.</p>
+      <div class="full-new">${TT.svg(TT.compose(look, { pfx: 'fn-', animated: false, scene: false, pet: false, fx: false }), '40 0 320 440')}<span>New: ${esc(look.name || 'No name yet')}</span></div>
+      <div class="closet-grid full-grid">${closet.map((s, i) => `<button class="look look-open swap-pick" type="button" data-swap="${i}" aria-label="Take out ${esc(s.name || 'this look')}">${TT.svg(TT.compose(s, { pfx: `sw${i}-`, animated: false }), '0 0 400 460')}<span>${esc(s.name || 'No name yet')}</span><i class="swap-x" aria-hidden="true">✕</i></button>`).join('')}</div>
+      <div class="full-actions"><button class="btn-soft" type="button" data-swapcancel>Never mind, don't save</button></div>`, 'wide-card full-card' + (inGame ? ' over-game' : ''));
+    $('#sheet').classList.toggle('over-game', inGame);
+  }
+  function finishSwap(i) {
+    const p = pendingSave; pendingSave = null;
+    $('#sheet').classList.remove('over-game');
+    closeModal($('#sheet'));
+    if (!p) return;
+    if (i == null) { p.done && p.done(false); return; }
+    const gone = closet[i];
+    closet.splice(i, 1); closet.unshift(p.look);
+    const ok = store.set(closetKey, closet); renderCloset();
+    toast(`Took out ${gone.name || 'a look'} and hung up ${p.look.name || 'your new look'}`);
+    p.done && p.done(true, ok, true);
+  }
+
   function startCloset() {
     const looks = picked.map(i => closet[i]);
     const mode = closetMode;
@@ -730,7 +757,7 @@
   function openGames() {
     stopDanceIf();
     TT.openGames({ look: () => clone(state), wallet: () => renderWallet(true),
-      saveLook: look => { closet.unshift(sanitize(look)); closet = closet.slice(0, 30); store.set(closetKey, closet); renderCloset(); return true; },
+      saveLook: (look, done) => addToCloset(look, done),
       onClose: () => { renderWallet(); renderDrawer(); $('#gamesBtn').focus({ preventScroll: true }); } });
   }
 
@@ -910,10 +937,11 @@
 
     $('#photo').addEventListener('click', () => photoFrom(TT.compose(state, { pfx: 'ph-', animated: false }), 400, 460, state.name || 'My critter', 'photo'));
     $('#save').addEventListener('click', () => {
-      closet.unshift(clone(state)); closet = closet.slice(0, 30);
-      const ok = store.set(closetKey, closet);
-      renderCloset(); Sound.sparkle(); toast(ok ? 'Hung up in your closet!' : 'Saved until you close this page');
-      reward(TT.dailyBonus('save', 2), 'first saved look today');
+      addToCloset(clone(state), (saved, ok, swapped) => {
+        if (!saved) return;
+        Sound.sparkle(); if (!swapped) toast(ok ? 'Hung up in your closet!' : 'Saved until you close this page');
+        reward(TT.dailyBonus('save', 2), 'first saved look today');
+      });
     });
     $('#closetBtn').addEventListener('click', () => { closetMode = null; picked = []; renderCloset(); openModal('#closet'); });
     $('#closet').addEventListener('click', e => {
@@ -951,7 +979,9 @@
     // shared sheet (unlock, challenges, share, settings)
     $('#sheet').addEventListener('click', e => {
       const t = e.target;
-      if (t === $('#sheet') || t.closest('[data-close]')) return closeModal($('#sheet'));
+      if (t === $('#sheet') || t.closest('[data-close]')) { if (pendingSave) return finishSwap(null); return closeModal($('#sheet')); }
+      const sw = t.closest('[data-swap]'); if (sw) { Sound.pop(); return finishSwap(+sw.dataset.swap); }
+      if (t.closest('[data-swapcancel]')) return finishSwap(null);
       if (t.closest('[data-unlock]')) return doUnlock();
       if (t.closest('[data-wheel]')) { Sound.tap(); return openWheel(); }
       if (t.closest('[data-spinnow]')) return spinWheel();
@@ -1011,6 +1041,7 @@
     $('#closet').addEventListener('click', e => { if (e.target === $('#closet') || e.target.closest('[data-close]')) closeModal($('#closet')); });
     document.addEventListener('keydown', e => {
       if (e.key === 'Escape' && !$('#viewer').hidden) { leaveViewer(); return; }
+      if (e.key === 'Escape' && pendingSave) { e.preventDefault(); finishSwap(null); return; }
       if (e.key === 'Escape') { if (!$('#dollModal').hidden && dollHash && location.hash === '#doll') { dollHash = false; window.history.back(); } document.querySelectorAll('.modal:not([hidden])').forEach(closeModal); }
       // shortcuts only for the dress-up screen: never while typing, or while a window is open
       if (e.target.closest && e.target.closest('input, textarea, select, [contenteditable]')) return;

@@ -73,6 +73,7 @@
   };
   function onKey(e) {
     if (!root) return;
+    if (e.defaultPrevented || document.querySelector('.modal:not([hidden])')) return; // a window on top of the game handles its own keys
     if (e.key === 'Escape') { e.preventDefault(); back(); return; }
     if (keyHandler) keyHandler(e);
   }
@@ -304,9 +305,11 @@
           e.preventDefault();
           const name = $('#ruName').value.trim().slice(0, 24) || st.name;
           const look = clone(st); look.name = name; look.pose = { id: 'wave' };
-          const ok = ctx.saveLook && ctx.saveLook(look);
-          $('#ruSaved').textContent = ok === false ? 'Your closet is full! Remove a look to make room.' : `${name} is hanging in your closet!`;
-          if (ok !== false) { Sound.sparkle(); $('#ruSave').querySelector('button').disabled = true; $('#ruName').disabled = true; }
+          ctx.saveLook(look, saved => {
+            const msg = $('#ruSaved'); if (!msg) return;
+            msg.textContent = saved ? `${name} is hanging in your closet!` : 'Not saved. You can still save if you change your mind.';
+            if (saved) { Sound.sparkle(); $('#ruSave').querySelector('button').disabled = true; $('#ruName').disabled = true; }
+          });
         });
       }
     }
