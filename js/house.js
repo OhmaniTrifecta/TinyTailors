@@ -176,7 +176,7 @@
         <div class="ho-say" id="hoSay" hidden></div>
         <div class="ho-tools${sel && sel.k === 'c' ? ' for-critter' : ''}" id="hoTools"${sel ? '' : ' hidden'}><button class="mini" type="button" data-ht="paint" aria-label="Change color">🎨</button><button class="mini" type="button" data-ht="flip" aria-label="Flip">⇆</button>
           <button class="mini" type="button" data-ht="smaller" aria-label="Smaller">−</button><button class="mini" type="button" data-ht="bigger" aria-label="Bigger">+</button>
-          <button class="mini" type="button" data-ht="front" aria-label="Bring to front">⬆</button><button class="mini" type="button" data-ht="del" aria-label="Put away">🗑</button></div></div>
+          <button class="mini" type="button" data-ht="front" aria-label="Move in front or behind">⇅</button><button class="mini" type="button" data-ht="del" aria-label="Put away">🗑</button></div></div>
       <div class="ho-panel-tabs" role="tablist"><button class="mini" type="button" data-hp="furniture">🛋️ Furniture</button><button class="mini" type="button" data-hp="walls">🎨 Walls & floors</button><button class="mini" type="button" data-hp="critters">🐾 Critters</button></div>
       <div class="ho-panel" id="hoPanel"></div>
       <p class="ho-msg" id="hoMsg" role="status" aria-live="polite"></p></div>`;
@@ -262,7 +262,15 @@
       if (k === 'flip') it.flip = it.flip ? 0 : 1;
       if (k === 'bigger' && sel.k === 'f') it.s = Math.min(2, +(it.s * 1.15).toFixed(2));
       if (k === 'smaller' && sel.k === 'f') it.s = Math.max(0.5, +(it.s / 1.15).toFixed(2));
-      if (k === 'front') { list.push(list.splice(sel.i, 1)[0]); sel.i = list.length - 1; }
+      if (k === 'front') {
+        // things only overlap others on the same layer (wall, rug or floor), so front/back is within that layer
+        const layerOf = x => sel.k === 'c' ? 'c' : (furn(x.f) || {}).layer;
+        const same = list.map((x, i) => i).filter(i => layerOf(list[i]) === layerOf(it));
+        const name = sel.k === 'c' ? (it.look.name || 'Your critter') : furn(it.f).name;
+        if (same.length < 2) msg(sel.k === 'c' ? 'Front/back moves critters in front of or behind other critters.' : `Nothing to move in front of. Front/back works when ${furn(it.f).layer === 'wall' ? 'wall things' : furn(it.f).layer === 'rug' ? 'rugs' : 'furniture pieces'} overlap.`);
+        else if (sel.i === same[same.length - 1]) { list.unshift(list.splice(sel.i, 1)[0]); sel.i = 0; msg(`${name} moved to the back.`); }
+        else { list.push(list.splice(sel.i, 1)[0]); sel.i = list.length - 1; msg(`${name} moved to the front.`); }
+      }
       if (k === 'del') { list.splice(sel.i, 1); sel = null; SND().undo(); }
       else SND().tap();
       save(); redrawRoom();
