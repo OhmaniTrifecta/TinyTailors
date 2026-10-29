@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Sniglet:wght@400;800&display=swap">
-  <link rel="stylesheet" href="style.css?v=20261029x">
+  <link rel="stylesheet" href="style.css?v=20261029q">
 </head>
 <body>
 <!--BODY-START-->
@@ -161,10 +161,11 @@
       <strong id="viewerName"></strong>
       <div class="viewer-tools">
         <button class="chip" type="button" data-viewact="dance"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V6l10-2v12"/><circle cx="7" cy="18" r="2.5"/><circle cx="17" cy="16" r="2.5"/></svg><span>Dance</span></button>
+        <button class="chip" type="button" data-viewact="qr" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><path d="M14 14h2v2h-2zM18 18h2v2h-2zM14 18h2M18 14h2"/></svg><span>QR code</span></button>
         <button class="chip" type="button" data-viewact="photo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg><span>Photo</span></button>
       </div>
     </div>
-    <div class="viewer-stage"><svg id="viewerSvg" viewBox="0 0 400 460" role="img" aria-label="Your dressed-up critter"></svg></div>
+    <div class="viewer-stage"><svg id="viewerSvg" viewBox="0 0 400 460" role="img" aria-label="Your dressed-up critter"></svg><div id="viewerQR" class="viewer-qr" hidden></div></div>
   </div>
 
   <!-- paper doll / coloring page -->
@@ -201,35 +202,37 @@
       <div class="photo-actions">
         <a id="photoDownload" class="btn-big" download="tiny-tailors.png" href="#">Download picture</a>
       </div>
+      <label class="photo-qr" id="photoQrRow"><input type="checkbox" id="photoQr"> Add a QR code friends can scan</label>
       <p class="modal-sub">Tip: you can also press and hold (or right-click) the picture to save it.</p>
     </div>
   </div>
 <!--BODY-END-->
-  <script src="js/core.js?v=20261029x"></script>
-  <script src="js/animals.js?v=20261029x"></script>
-  <script src="js/wardrobe-clothes.js?v=20261029x"></script>
-  <script src="js/wardrobe-accessories.js?v=20261029x"></script>
-  <script src="js/world.js?v=20261029x"></script>
-  <script src="js/extras.js?v=20261029x"></script>
-  <script src="js/render.js?v=20261029x"></script>
-  <script src="js/challenges.js?v=20261029x"></script>
-  <script src="js/progress.js?v=20261029x"></script>
-  <script src="js/events.js?v=20261029x"></script>
-  <script src="js/opinions.js?v=20261029x"></script>
-  <script src="js/play.js?v=20261029x"></script>
-  <script src="js/album.js?v=20261029x"></script>
-  <script src="js/fabric.js?v=20261029x"></script>
-  <script src="js/share.js?v=20261029x"></script>
-  <script src="js/sound.js?v=20261029x"></script>
-  <script src="js/songs.js?v=20261029x"></script>
-  <script src="js/show.js?v=20261029x"></script>
-  <script src="js/paperdoll.js?v=20261029x"></script>
-  <script src="js/games.js?v=20261029x"></script>
-  <script src="js/games2.js?v=20261029x"></script>
-  <script src="js/photobooth.js?v=20261029x"></script>
-  <script src="js/career.js?v=20261029x"></script>
-  <script src="js/house.js?v=20261029x"></script>
-  <script src="js/town.js?v=20261029x"></script>
-  <script src="js/app.js?v=20261029x"></script>
+  <script src="js/core.js?v=20261029q"></script>
+  <script src="js/animals.js?v=20261029q"></script>
+  <script src="js/wardrobe-clothes.js?v=20261029q"></script>
+  <script src="js/wardrobe-accessories.js?v=20261029q"></script>
+  <script src="js/world.js?v=20261029q"></script>
+  <script src="js/extras.js?v=20261029q"></script>
+  <script src="js/render.js?v=20261029q"></script>
+  <script src="js/challenges.js?v=20261029q"></script>
+  <script src="js/progress.js?v=20261029q"></script>
+  <script src="js/events.js?v=20261029q"></script>
+  <script src="js/opinions.js?v=20261029q"></script>
+  <script src="js/play.js?v=20261029q"></script>
+  <script src="js/album.js?v=20261029q"></script>
+  <script src="js/fabric.js?v=20261029q"></script>
+  <script src="js/share.js?v=20261029q"></script>
+  <script src="js/qr.js?v=20261029q"></script>
+  <script src="js/sound.js?v=20261029q"></script>
+  <script src="js/songs.js?v=20261029q"></script>
+  <script src="js/show.js?v=20261029q"></script>
+  <script src="js/paperdoll.js?v=20261029q"></script>
+  <script src="js/games.js?v=20261029q"></script>
+  <script src="js/games2.js?v=20261029q"></script>
+  <script src="js/photobooth.js?v=20261029q"></script>
+  <script src="js/career.js?v=20261029q"></script>
+  <script src="js/house.js?v=20261029q"></script>
+  <script src="js/town.js?v=20261029q"></script>
+  <script src="js/app.js?v=20261029q"></script>
 </body>
 </html>

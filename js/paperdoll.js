@@ -102,6 +102,9 @@
     }
 
     // 4. lay it out on a letter page, shrinking until it fits
+    const QR = 104;
+    let qrLink = '';
+    try { qrLink = TT.lookLink && TT.encodeLook ? TT.lookLink(TT.encodeLook(st)) : ''; } catch (e) { qrLink = ''; }
     const name = (st.name || '').trim();
     const kindName = coloring ? 'coloring page' : 'paper doll';
     const title = name ? `${name}'s ${kindName}` : `My ${kindName}`;
@@ -119,8 +122,11 @@
       // the dressed look sits top-right as a guide
       const lw = Math.min(200, PAGE_W - M * 2 - dw - 20), lh = lw * 460 / 400;
       const lookBox = { x: PAGE_W - M - lw, y: top, w: lw, h: lh };
+      // a QR code under the look, so anyone with the page can scan it and see the critter in the app
+      const qrBox = qrLink ? { x: lookBox.x + (lw - QR) / 2, y: top + lh + 32, w: QR } : null;
+      const belowLook = qrBox ? qrBox.y + QR + 34 : top + lh + 30;
       // shelf-pack the pieces: first beside the doll (under the look), then under the doll across the page
-      const areas = [{ x: M + dw + 20, y: top + lh + 30, r: PAGE_W - M, b: top + dh }, { x: M, y: top + dh + 26, r: PAGE_W - M, b: PAGE_H - M - 24 }];
+      const areas = [{ x: M + dw + 20, y: belowLook, r: PAGE_W - M, b: top + dh }, { x: M, y: top + dh + 26, r: PAGE_W - M, b: PAGE_H - M - 24 }];
       let ai = 0, cx = areas[0].x, cy = areas[0].y, rowH = 0;
       for (const p of pieces.slice().sort((a, b) => b.vb[3] - a.vb[3])) {
         const w = p.vb[2] * k, h = p.vb[3] * k;
@@ -134,7 +140,7 @@
           break;
         }
       }
-      return { ok: true, out, lookBox };
+      return { ok: true, out, lookBox, qrBox };
     }
 
     const style = `<style>
@@ -151,6 +157,12 @@
     svg += `<rect x="${L.x - 6}" y="${L.y - 6}" width="${L.w + 12}" height="${L.h + 12}" rx="14" fill="${coloring ? '#ffffff' : '#fff4f7'}" stroke="#f4b3c8" stroke-width="2" stroke-dasharray="6 5"/>`;
     svg += `<svg x="${L.x}" y="${L.y}" width="${L.w}" height="${L.h}" viewBox="0 0 400 460">${lookArt}</svg>`;
     svg += `<text class="pd-cap" x="${L.x + L.w / 2}" y="${L.y + L.h + 20}" text-anchor="middle">${coloring ? 'Color your look!' : 'Your look'}</text>`;
+    if (placed.qrBox) {
+      const Q = placed.qrBox;
+      svg += `<rect x="${(Q.x - 6).toFixed(1)}" y="${(Q.y - 6).toFixed(1)}" width="${Q.w + 12}" height="${Q.w + 12}" rx="12" fill="#ffffff" stroke="#f4b3c8" stroke-width="2"/>`;
+      svg += TT.qrSVG(qrLink, +Q.x.toFixed(1), +Q.y.toFixed(1), Q.w);
+      svg += `<text class="pd-cap" x="${(Q.x + Q.w / 2).toFixed(1)}" y="${(Q.y + Q.w + 20).toFixed(1)}" text-anchor="middle">Scan to see me in Tiny Tailors!</text>`;
+    }
     placed.out.forEach(({ p, x, y, w, h, cap }) => {
       svg += `<svg x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" viewBox="${p.vb.map(v => v.toFixed(1)).join(' ')}">${p.body}</svg>`;
       svg += `<text class="pd-cap" x="${(x + w / 2).toFixed(1)}" y="${(y + h + 11).toFixed(1)}" text-anchor="middle">${esc(cap)}</text>`;

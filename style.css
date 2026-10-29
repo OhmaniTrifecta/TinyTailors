@@ -1267,3 +1267,23 @@ body.calm .tfx { opacity: 0; }
 @keyframes ch-pulse { 50% { transform: scale(1.03); box-shadow: 0 6px 0 var(--ink), 0 0 0 6px rgba(255, 216, 77, .7); } }
 @media (prefers-reduced-motion: reduce) { .challenge.pulse { animation: none; } }
 .ev-steps, .ev-tips { margin: 4px 0 12px; padding-left: 22px; display: grid; gap: 4px; text-align: left; font-weight: 600; }
+
+/* ---------- QR codes (share window, full-screen view, photos) ---------- */
+.qr-share { display: flex; align-items: center; gap: 14px; margin: 4px 0 12px; background: #fff; border: 2.5px dashed var(--stitch); border-radius: 18px; padding: 12px; }
+.qr-share .qr-pic { width: 150px; height: 150px; flex: none; border-radius: 12px; border: 2.5px solid var(--ink); }
+.qr-side { min-width: 0; text-align: left; }
+.qr-side b { font: 800 19px var(--display); color: var(--berry-deep); }
+.qr-side .modal-sub { margin: 4px 0 10px; }
+@media (max-width: 420px) { .qr-share { flex-direction: column; text-align: center; } .qr-side { text-align: center; } .qr-share .qr-pic { width: 190px; height: 190px; } }
+.viewer-stage.has-qr { display: flex; align-items: center; justify-content: center; gap: 14px; flex-direction: column; }
+.viewer-stage.has-qr svg#viewerSvg { width: min(100%, calc((100dvh - 120px - clamp(130px, 22vmin, 210px) - 34px) * 0.8696)); }
+@media (orientation: landscape) { .viewer-stage.has-qr { flex-direction: row; } .viewer-stage.has-qr svg#viewerSvg { width: min(calc(100% - clamp(130px, 22vmin, 210px) - 40px), calc((100dvh - 120px) * 0.8696)); } }
+.viewer-qr { flex: none; display: flex; flex-direction: column; align-items: center; gap: 2px; background: #fff; border: 3px solid var(--ink); border-radius: 18px; padding: 8px 8px 6px; box-shadow: var(--shadow); }
+.viewer-qr[hidden] { display: none; }
+.viewer-stage .viewer-qr .qr-pic { width: clamp(110px, 22vmin, 190px); height: auto; aspect-ratio: 1; display: block; border: 0; border-radius: 0; box-shadow: none; background: none; }
+.viewer-qr span { font: 800 14px var(--display); color: var(--berry-deep); }
+.viewer-tools .chip[aria-pressed="true"] { background: var(--berry); color: #fff; }
+.photo-qr { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 12px; font: 700 15px var(--body, 'Baloo 2', sans-serif); color: var(--ink); cursor: pointer; }
+.photo-qr[hidden] { display: none; }
+.photo-qr input { width: 22px; height: 22px; accent-color: var(--berry); }
+.viewer-tools .chip[aria-pressed="true"] svg { stroke: #fff; }

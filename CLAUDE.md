@@ -78,6 +78,8 @@ Rules:
   and a first 4+ star result wins that challenge's prize item. Album pages pay a one-time prize (30–60). Shop days pay through
   `TT.rewardGame('career', stars)`; rank-ups pay 15 + 5 × rank once; finishing a regular's story pays 15 once. Tips 🪙 are the
   shop's own money and only buy shop upgrades/paint. House furniture (10–120) and rooms (60/90/150) cost stitches.
+- QR codes (`js/qr.js`, built in, no library): share window, full-screen view toggle, optional on single photos (not group photos),
+  always on paper doll/coloring pages. They link to `TT.lookLink(code)` (the live site unless already on a tinytailors host).
 - Closet holds 30 looks; when full, the player picks which look to remove (`addToCloset` in `js/app.js`).
 - Credit on the title screen: "App design by Sophia and Sabrina Pernal" (no year).
 - After any change: bump `?v=` in index.html, commit with the attribution lines, push to `main`.

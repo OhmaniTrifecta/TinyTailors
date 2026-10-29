@@ -600,10 +600,25 @@
     if (!TT.openBooth) return photoFrom(inner, vw, vh, caption, kind);
     TT.openBooth({ inner, vw, vh, caption, onDone: (finalInner) => photoFrom(finalInner, vw, vh, caption, kind) });
   }
+  const photoQrPref = () => { try { return localStorage.getItem('tt-photo-qr') === '1'; } catch (e) { return false; } };
+  let lastPhoto = null, photoJob = 0;
   async function photoFrom(inner, vw, vh, caption, kind) {
     Sound.shutter();
     $('#stageCard').animate([{ filter: 'brightness(1.8)' }, { filter: 'none' }], { duration: 350 });
-    const scale = 2, pad = 40, W = vw * scale + pad * 2, H = vh * scale + pad * 2 + 160;
+    // group photos hold several looks, so only single-critter photos can carry a QR code
+    lastPhoto = { inner, vw, vh, caption, kind, link: kind === 'group' ? '' : shareLink(TT.encodeLook(state)) };
+    const row = $('#photoQrRow');
+    if (row) { row.hidden = !lastPhoto.link || !TT.qrDraw; $('#photoQr').checked = photoQrPref(); }
+    await drawPhoto();
+    openModal('#photoModal');
+    reward(TT.dailyBonus(kind === 'group' ? 'group' : 'photo', 3), kind === 'group' ? 'first group photo today' : 'first photo today');
+  }
+  async function drawPhoto() {
+    if (!lastPhoto) return;
+    const job = ++photoJob;
+    const { inner, vw, vh, caption, link } = lastPhoto;
+    const withQR = !!(link && TT.qrDraw && $('#photoQr') && $('#photoQr').checked);
+    const scale = 2, pad = 40, band = withQR ? 230 : 160, W = vw * scale + pad * 2, H = vh * scale + pad * 2 + band;
     const cvs = document.createElement('canvas'); cvs.width = W; cvs.height = H;
     const g = cvs.getContext('2d');
     const svg = TT.svg(inner, `0 0 ${vw} ${vh}`, `width="${vw * scale}" height="${vh * scale}"`);
@@ -617,17 +632,32 @@
     g.lineWidth = 5; roundRect(g, pad, pad, vw * scale, vh * scale, 30); g.stroke();
     g.setLineDash([12, 10]); g.strokeStyle = '#f4b3c8'; g.lineWidth = 4; roundRect(g, 18, 18, W - 36, H - 36, 36); g.stroke(); g.setLineDash([]);
     g.textAlign = 'center';
-    g.fillStyle = '#e64f7c'; g.font = '800 52px Sniglet, "Baloo 2", sans-serif';
-    g.fillText(caption || 'My critter', W / 2, H - 92);
-    g.fillStyle = '#8a6f88'; g.font = '700 26px "Baloo 2", sans-serif';
-    g.fillText('Tailored at Tiny Tailors', W / 2, H - 50);
+    const fit = (text, size, maxW) => { let f = size; do { g.font = `800 ${f}px Sniglet, "Baloo 2", sans-serif`; f -= 2; } while (g.measureText(text).width > maxW && f > 24); };
+    if (withQR) {
+      // QR code in the bottom-right corner, words to its left
+      const q = 176, qx = W - pad - q, qy = pad + vh * scale + 22;
+      g.fillStyle = '#ffffff'; roundRect(g, qx - 8, qy - 8, q + 16, q + 16, 18); g.fill();
+      g.lineWidth = 4; g.strokeStyle = '#5b3f58'; roundRect(g, qx - 8, qy - 8, q + 16, q + 16, 18); g.stroke();
+      TT.qrDraw(g, link, qx, qy, q);
+      const cx = (pad + qx - 16) / 2, maxW = qx - 16 - pad - 20;
+      g.fillStyle = '#e64f7c'; fit(caption || 'My critter', 52, maxW);
+      g.fillText(caption || 'My critter', cx, qy + 62);
+      g.fillStyle = '#8a6f88'; g.font = '700 26px "Baloo 2", sans-serif';
+      g.fillText('Tailored at Tiny Tailors', cx, qy + 104);
+      g.fillStyle = '#5b3f58'; g.font = '700 24px "Baloo 2", sans-serif';
+      g.fillText('Scan the code to see me! →', cx, qy + 146);
+    } else {
+      g.fillStyle = '#e64f7c'; fit(caption || 'My critter', 52, W - pad * 2 - 20);
+      g.fillText(caption || 'My critter', W / 2, H - 92);
+      g.fillStyle = '#8a6f88'; g.font = '700 26px "Baloo 2", sans-serif';
+      g.fillText('Tailored at Tiny Tailors', W / 2, H - 50);
+    }
+    if (job !== photoJob) return;
     let url;
     try { url = cvs.toDataURL('image/png'); } catch (e) { url = img.src; }
     $('#photoImg').src = url;
     const a = $('#photoDownload');
     if (a) { a.href = url; a.download = `${(caption || 'tiny-tailors').replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.png`; }
-    openModal('#photoModal');
-    reward(TT.dailyBonus(kind === 'group' ? 'group' : 'photo', 3), kind === 'group' ? 'first group photo today' : 'first photo today');
   }
   function roundRect(g, x, y, w, h, r) {
     g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath();
@@ -691,11 +721,15 @@
   }
 
   /* ---------------- share ---------------- */
-  function shareLink(code) { return location.origin && location.origin !== 'null' ? `${location.origin}${location.pathname}#look=${code}` : ''; }
+  function shareLink(code) { return TT.lookLink ? TT.lookLink(code) : (location.origin && location.origin !== 'null' ? `${location.origin}${location.pathname}#look=${code}` : ''); }
+  const qrPic = (link, label) => TT.qrSVG ? `<svg class="qr-pic" viewBox="0 0 100 100" role="img" aria-label="${esc(label)}">${TT.qrSVG(link, 0, 0, 100)}</svg>` : '';
   function openShare() {
     const code = TT.encodeLook(state);
     const link = shareLink(code);
-    sheet('Share your look', `<p class="modal-sub">Send this code to a friend. They tap <b>Menu → Share &amp; codes</b> in Tiny Tailors and paste it in.</p>
+    sheet('Share your look', `${link && TT.qrSVG ? `<div class="qr-share">${qrPic(link, 'QR code for your look')}
+        <div class="qr-side"><b>Scan to see my critter!</b><p class="modal-sub">Friends point their phone camera at this code and Tiny Tailors opens wearing your look.</p>
+        <button class="btn-soft" type="button" data-qrbig>Show it full screen</button></div></div>` : ''}
+      <p class="modal-sub">Or send this code to a friend. They tap <b>Menu → Share &amp; codes</b> in Tiny Tailors and paste it in.</p>
       <div class="code-box"><code id="shareCode">${esc(code)}</code><button class="mini" type="button" data-copy="${esc(code)}">Copy code</button></div>
       ${link && /^https?:/.test(link) ? `<div class="code-box"><code class="link">${esc(link)}</code><button class="mini" type="button" data-copy="${esc(link)}">Copy link</button></div>` : ''}
       <div class="row-label">Got a code from a friend?</div>
@@ -721,6 +755,19 @@
     if ($('#viewer').hidden) return;
     $('#viewerSvg').innerHTML = TT.compose(state, { pfx: 'fs-', pose: dancePose || undefined });
     $('#viewerName').textContent = state.name || '';
+    renderViewerQR();
+  }
+  let viewerQR = false;
+  function renderViewerQR() {
+    const box = $('#viewerQR'), btn = $('#viewer').querySelector('[data-viewact="qr"]');
+    if (btn) btn.setAttribute('aria-pressed', viewerQR);
+    if (!box) return;
+    box.hidden = !viewerQR;
+    box.parentElement.classList.toggle('has-qr', viewerQR);
+    if (viewerQR) {
+      const link = shareLink(TT.encodeLook(state));
+      if (box.dataset.link !== link) { box.dataset.link = link; box.innerHTML = `${qrPic(link, 'QR code: scan to see this critter')}<span>Scan to see me!</span>`; }
+    }
   }
   function openViewer() {
     viewHash = false;
@@ -1074,6 +1121,7 @@
         <button class="btn-big" type="button" data-gochallenge>Earn stitches now</button>`);
     });
 
+    $('#photoQr') && $('#photoQr').addEventListener('change', e => { try { localStorage.setItem('tt-photo-qr', e.target.checked ? '1' : '0'); } catch (err) { } Sound.tap(); drawPhoto(); });
     $('#photo').addEventListener('click', () => { stopDanceIf(); booth(TT.compose(state, { pfx: 'ph-', animated: false }), 400, 460, state.name || 'My critter', 'photo'); });
     $('#save').addEventListener('click', () => {
       addToCloset(clone(state), (saved, ok, swapped) => {
@@ -1136,6 +1184,7 @@
       if (t.closest('[data-gotown]')) { closeModal($('#sheet')); return openTown('event'); }
       if (t.closest('[data-pickrandom]')) { setChallenge(pick(TT.CHALLENGES), false); closeModal($('#sheet')); Sound.tap(); return; }
       if (t.closest('[data-newch]')) { closeModal($('#sheet')); return openChallengePicker(); }
+      if (t.closest('[data-qrbig]')) { closeModal($('#sheet')); viewerQR = true; return openViewer(); }
       const cp = t.closest('[data-copy]');
       if (cp) {
         const text = cp.dataset.copy;
@@ -1205,6 +1254,7 @@
       const a = e.target.closest('[data-viewact]');
       if (a && a.dataset.viewact === 'dance') dance();
       if (a && a.dataset.viewact === 'photo') $('#photo').click();
+      if (a && a.dataset.viewact === 'qr') { viewerQR = !viewerQR; Sound.pop(); renderViewerQR(); }
     });
     window.addEventListener('hashchange', () => {
       if (location.hash === '#view') { if (!$('#viewer').hidden) viewHash = true; return; }

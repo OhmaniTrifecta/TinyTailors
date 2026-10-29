@@ -67,6 +67,7 @@ Most clothes come in **20 colors** (plus a color mixer), a second **trim color**
 - **Fashion show**: pick 2 to 5 saved looks and they strut the runway to a random song, camera flashes and a cheer meter.
 - **Group photo**: put 2 to 4 saved critters in one picture.
 - **Share codes**: every look turns into a code (and a link like `yoursite.vercel.app/#look=TT1-…`). Friends paste it to wear the exact look, custom fabrics included.
+- **QR codes**: the share window shows a QR code friends can scan with their phone camera to open the app wearing your look ("Show it full screen" puts it next to your critter, or tap **QR code** in full-screen view). Photos have an "Add a QR code" checkbox (remembered), and paper doll and coloring pages always print one under the look.
 - **Printable paper doll** and **coloring page**: made from the exact look on screen. One letter-size page with your dressed-up look, the critter on a fold-out stand and every piece it wears with fold-over tabs. Print it, save it as a PDF, or save it as a picture.
 - **Search & Faves**: search all 400+ items, and star favorites into their own drawer.
 - **Settings**: sound, read item names out loud, calm mode (no animations), bigger buttons.
@@ -139,6 +140,7 @@ js/challenges.js           item theme tags, challenges and the judge
 js/progress.js             stitches, unlocks, streaks, faves, settings
 js/fabric.js               the fabric studio
 js/share.js                share codes
+js/qr.js                   QR code maker (no library) + TT.lookLink
 js/sound.js                little synth sounds and music
 js/songs.js                the 11 songs for Runway Rhythm and the fashion show
 js/show.js                 fashion show and group photos
