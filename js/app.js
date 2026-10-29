@@ -855,7 +855,9 @@
     document.addEventListener('keydown', e => {
       if (e.key === 'Escape' && !$('#viewer').hidden) { leaveViewer(); return; }
       if (e.key === 'Escape') { if (!$('#dollModal').hidden && dollHash && location.hash === '#doll') { dollHash = false; window.history.back(); } document.querySelectorAll('.modal:not([hidden])').forEach(closeModal); }
-      if (e.target.matches('input')) return;
+      // shortcuts only for the dress-up screen: never while typing, or while a window is open
+      if (e.target.closest('input, textarea, select, [contenteditable]')) return;
+      if (document.querySelector('.modal:not([hidden])') || !$('#viewer').hidden) return;
       if ($('#app').hidden) return;
       if (e.key === 'r' || e.key === 'R') $('#surprise').click();
       if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); (e.shiftKey ? $('#redo') : $('#undo')).click(); }
