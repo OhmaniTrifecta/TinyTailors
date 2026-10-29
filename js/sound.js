@@ -1,6 +1,6 @@
 /* Tiny Tailors — tiny synth sounds (no audio files needed). */
 (function (TT) {
-  let ctx = null;
+  let ctx = null, noiseBuf = null;
   const Sound = {
     on: true,
     wake() {
@@ -69,8 +69,20 @@
       const start = ctx.currentTime + leadSec;
       // what we hear lags what we schedule by the device's output latency (bigger on Bluetooth)
       const lat = (ctx.outputLatency || ctx.baseLatency || 0) * 1000;
+      if (!noiseBuf) {
+        noiseBuf = ctx.createBuffer(1, ctx.sampleRate * 0.5, ctx.sampleRate);
+        const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+      }
       events.forEach(e => {
         const t = start + e.t;
+        if (t < ctx.currentTime) return;
+        if (e.type === 'noise') { // drums: snare and hi-hat
+          const n = ctx.createBufferSource(), g = ctx.createGain(), f = ctx.createBiquadFilter();
+          n.buffer = noiseBuf; f.type = 'highpass'; f.frequency.value = e.f || 1000;
+          g.gain.setValueAtTime(e.v || 0.1, t); g.gain.exponentialRampToValueAtTime(0.0001, t + e.d);
+          n.connect(f).connect(g).connect(bus); n.start(t); n.stop(t + e.d + 0.02);
+          return;
+        }
         const o = ctx.createOscillator(), g = ctx.createGain();
         o.type = e.type || 'triangle';
         o.frequency.setValueAtTime(e.f, t);

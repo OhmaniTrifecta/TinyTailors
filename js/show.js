@@ -34,7 +34,10 @@
     const stop = () => { stopped = true; cancelAnimationFrame(raf); TT.Sound.stopMusic(); wrap.remove(); running = null; };
     running = { stop };
     wrap.querySelector('#showClose').addEventListener('click', () => { stop(); opts.onClose && opts.onClose(); });
-    TT.Sound.startMusic();
+    // a random song from the library, long enough for every model's walk
+    const song = TT.SONGS[Math.floor(Math.random() * TT.SONGS.length)];
+    TT.Sound.playSong(TT.songFor(song, looks.length * 5 + 1), 0.05);
+    wrap.querySelector('.show-label').insertAdjacentHTML('beforeend', ` · ♪ ${song.name.replace(/[<>&]/g, '')}`);
 
     const poseById = id => TT.itemOf('pose', id) || TT.POSES[0];
     const sprites = looks.map((st, i) => ({

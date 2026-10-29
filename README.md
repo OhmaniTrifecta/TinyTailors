@@ -39,11 +39,12 @@ Most clothes come in **20 colors** (plus a color mixer), a second **trim color**
 - **Games** (the 🎮 button): six mini-games starring your own critter. Each pays up to 12 stitches a day with 3 stars or more, up to 40 a day from all games.
   - **Copycat Closet**: memorize an outfit, then rebuild it from four choices per piece (the last round adds a color trick).
   - **Customer Rush**: critter customers ask for a look ("Ready for a camping trip!"). Dress them before the timer runs out; the style judge scores each one.
-  - **Runway Rhythm**: tap Wave, Hooray!, Ta-da! or Jump! as the stars hit the line, and your critter strikes the pose on the runway.
+  - **Runway Rhythm**: pick one of 11 songs (Easy, Medium or Tricky), then tap Wave, Hooray!, Ta-da! or Jump! as the stars hit the line. Each song is built from its own star chart, so every star plays its note right on the beat.
   - **Critter Catch**: catch falling buttons, spools and stars, and dodge the scissors.
   - **Hide & Seek**: find your critter in a crowd of look-alikes. Later levels change just one piece, or just a color.
   - **Memory Match**: flip cards to match pairs of hats, pets, critters and more (12 or 16 cards).
-- **Fashion show**: pick 2 to 5 saved looks and they strut the runway with music, camera flashes and a cheer meter.
+- **Lucky wheel**: tap any locked item and spin the wheel for 20 stitches. Land on the gold space (1 in 10 chance) and the item is yours.
+- **Fashion show**: pick 2 to 5 saved looks and they strut the runway to a random song, camera flashes and a cheer meter.
 - **Group photo**: put 2 to 4 saved critters in one picture.
 - **Share codes**: every look turns into a code (and a link like `yoursite.vercel.app/#look=TT1-…`). Friends paste it to wear the exact look, custom fabrics included.
 - **Printable paper doll** and **coloring page**: made from the exact look on screen. One letter-size page with your dressed-up look, the critter on a fold-out stand and every piece it wears with fold-over tabs. Print it, save it as a PDF, or save it as a picture.
@@ -119,6 +120,7 @@ js/progress.js             stitches, unlocks, streaks, faves, settings
 js/fabric.js               the fabric studio
 js/share.js                share codes
 js/sound.js                little synth sounds and music
+js/songs.js                the 11 songs for Runway Rhythm and the fashion show
 js/show.js                 fashion show and group photos
 js/games.js                the six mini-games (Games button)
 js/paperdoll.js            printable paper doll and coloring page

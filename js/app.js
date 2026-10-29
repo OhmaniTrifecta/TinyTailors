@@ -297,15 +297,17 @@
   /* ---------------- unlocking ---------------- */
   let pendingUnlock = null;
   function askUnlock(kind, obj, apply, preview) {
-    pendingUnlock = { kind, obj, apply };
+    pendingUnlock = { kind, obj, apply, preview };
     const can = PR.stitches >= obj.locked;
     sheet('Unlock it?', `<div class="unlock">
       <div class="unlock-art">${preview || ''}</div>
       <div><span class="rarity r-${TT.rarity(obj.locked).id}">${TT.rarity(obj.locked).name}</span><p class="unlock-name">${esc(obj.name)}</p>
       <p class="unlock-price">${priceTag(obj.locked)} <span>You have ${PR.stitches}</span></p>
       ${can ? `<button class="btn-big" type="button" data-unlock>Unlock for ${obj.locked} stitches</button>`
-        : `<p class="modal-sub">You need ${obj.locked - PR.stitches} more stitches. Save up by doing style challenges (the daily one pays double!), fashion shows and photos. ${obj.locked - PR.stitches > 90 ? 'Special things take a few days to save for!' : ''}</p><button class="btn-soft" type="button" data-gochallenge>Do a challenge</button>`}
-      </div></div>`, 'unlock-card');
+        : `<p class="modal-sub">You need ${obj.locked - PR.stitches} more stitches. Save up by doing style challenges (the daily one pays double!), games, fashion shows and photos. ${obj.locked - PR.stitches > 90 ? 'Special things take a few days to save for!' : ''}</p><button class="btn-soft" type="button" data-gochallenge>Do a challenge</button>`}
+      </div></div>
+      <div class="spin-offer">${WHEEL_ICON}<div><b>Feeling lucky?</b> Spin the wheel for ${TT.SPIN_COST} stitches. If it lands on ${esc(obj.name)}, it's yours! <span>(1 in 10 chance)</span></div>
+        <button class="btn-soft" type="button" data-wheel>Spin the wheel</button></div>`, 'unlock-card');
   }
   function doUnlock() {
     if (!pendingUnlock) return;
@@ -316,6 +318,99 @@
       apply(); celebrate('glitter');
     }
     pendingUnlock = null;
+  }
+
+  /* ---------------- lucky wheel ---------------- */
+  const WHEEL_ICON = TT.svg([0, 1, 2, 3, 4, 5, 6, 7].map(i => `<path d="M0,0 L${(30 * Math.sin(i * Math.PI / 4)).toFixed(1)},${(-30 * Math.cos(i * Math.PI / 4)).toFixed(1)} A30,30 0 0 1 ${(30 * Math.sin((i + 1) * Math.PI / 4)).toFixed(1)},${(-30 * Math.cos((i + 1) * Math.PI / 4)).toFixed(1)}Z" fill="${['#ff9ec0', '#ffe17a', '#9ee6c0', '#cfa8ff'][i % 4]}" stroke="#5b3f58" stroke-width="2.5"/>`).join('') + TT.C(0, 0, 7, '#fffdf9', 3) + '<path d="M-6,-38 L6,-38 L0,-26Z" fill="#e64f7c" stroke="#5b3f58" stroke-width="2.5" stroke-linejoin="round"/>', '-36 -42 72 78', 'class="wheel-ic" aria-hidden="true"');
+  const WHEEL_MISS = ['Oops!', 'So close!', 'Aww!', 'Next time', 'Almost!', 'Oh no!', 'Hmm…', 'Nope!', 'Try again'];
+  const WHEEL_COLS = ['#ff9ec0', '#9cd3ff', '#9ee6c0', '#cfa8ff', '#ffb38a', '#9cd3ff', '#9ee6c0', '#ff9ec0', '#cfa8ff'];
+  let wheelAngle = 0, wheelBusy = false;
+  const pt = (deg, r) => { const a = deg * Math.PI / 180; return `${(r * Math.sin(a)).toFixed(2)},${(-r * Math.cos(a)).toFixed(2)}`; };
+  function wheelPrizeArt(kind, obj, preview) {
+    if (preview && /^<svg/.test(preview)) return preview.replace(/^<svg /, '<svg x="-24" y="-24" width="48" height="48" ');
+    const hex = obj.hex || '#ffe17a';
+    return TT.C(0, 0, 20, hex, 3);
+  }
+  function wheelSVG(kind, obj, preview) {
+    let segs = '';
+    for (let i = 0; i < 10; i++) {
+      const a = i * 36, win = i === 0;
+      segs += `<path d="M0,0 L${pt(a - 18, 100)} A100,100 0 0 1 ${pt(a + 18, 100)}Z" fill="${win ? '#ffe17a' : WHEEL_COLS[i - 1]}" stroke="#5b3f58" stroke-width="3"/>`;
+      if (win) segs += `<g transform="rotate(${a})">${TT.star(0, -86, 7, '#fff', 0)}<g transform="translate(0 -60)">${TT.C(0, 0, 27, '#fffdf9', 3)}${wheelPrizeArt(kind, obj, preview)}</g></g>`;
+      else segs += `<text transform="rotate(${a}) translate(0 -58) rotate(-90)" text-anchor="middle" dominant-baseline="middle" font-family="Sniglet, 'Baloo 2', sans-serif" font-weight="800" font-size="11.5" fill="#5b3f58">${WHEEL_MISS[i - 1]}</text>`;
+    }
+    for (let i = 0; i < 10; i++) segs += TT.C(+pt(i * 36 + 18, 93).split(',')[0], +pt(i * 36 + 18, 93).split(',')[1], 3.6, '#fffdf9', 2);
+    return `<svg class="wheel" viewBox="-112 -118 224 230" role="img" aria-label="Prize wheel">
+      <circle r="106" fill="#e64f7c" stroke="#5b3f58" stroke-width="4"/>
+      <g id="wheelSpin" transform="rotate(${wheelAngle})">${segs}</g>
+      <circle r="16" fill="#fffdf9" stroke="#5b3f58" stroke-width="4"/>${TT.heart(0, 2, 9, '#ff6f96', 2)}
+      <g id="wheelPointer"><path d="M-12,-116 L12,-116 L0,-90Z" fill="#ff6f96" stroke="#5b3f58" stroke-width="3.5" stroke-linejoin="round"/></g></svg>`;
+  }
+  function openWheel() {
+    if (!pendingUnlock) return;
+    const { kind, obj } = pendingUnlock;
+    wheelAngle = 0; wheelBusy = false;
+    sheet('Lucky wheel', `<div class="wheel-wrap">
+      <div class="wheel-box">${wheelSVG(kind, obj, pendingUnlock.preview)}</div>
+      <div class="wheel-side">
+        <p class="wheel-for">Spin to win</p><p class="unlock-name">${esc(obj.name)}</p>
+        <p class="modal-sub">${TT.SPIN_COST} stitches a spin. Land on the gold space and it's yours (1 in 10 chance).</p>
+        <p class="wheel-msg" id="wheelMsg" role="status" aria-live="polite"></p>
+        <div class="wheel-actions" id="wheelActions"></div>
+      </div></div>`, 'wide-card wheel-card');
+    wheelButtons();
+  }
+  function wheelButtons(won) {
+    const box = $('#wheelActions'); if (!box || !pendingUnlock) return;
+    const { obj } = pendingUnlock;
+    if (won) { box.innerHTML = `<button class="btn-big" type="button" data-wear>Wear it!</button>`; return; }
+    const canSpin = PR.stitches >= TT.SPIN_COST;
+    box.innerHTML = `<button class="btn-big" type="button" data-spinnow ${canSpin ? '' : 'disabled'}>${wheelAngle ? 'Spin again' : 'Spin!'} <span class="price r-common">${SPOOL}${TT.SPIN_COST}</span></button>
+      <p class="wheel-bal">You have <b>${PR.stitches}</b> stitches${canSpin ? '' : ` · you need ${TT.SPIN_COST - PR.stitches} more to spin`}</p>
+      ${PR.stitches >= obj.locked ? `<button class="btn-soft" type="button" data-unlock>Or just unlock it for ${obj.locked}</button>` : ''}`;
+  }
+  function spinWheel() {
+    if (wheelBusy || !pendingUnlock) return;
+    const { kind, obj, apply } = pendingUnlock;
+    const res = TT.spinFor(kind, obj);
+    if (!res) return wheelButtons();
+    wheelBusy = true; renderWallet();
+    $('#wheelMsg').textContent = 'Spinning…';
+    $('#wheelActions').querySelectorAll('button').forEach(b => { b.disabled = true; });
+    // pick where it stops: the gold space if you won, any other space if not (never exactly on a line)
+    const seg = res.win ? 0 : 1 + Math.floor(Math.random() * 9);
+    const from = wheelAngle;
+    const base = Math.ceil(from / 360) * 360 + 360 * (5 + Math.floor(Math.random() * 2));
+    const to = base + (360 - seg * 36) % 360 + (Math.random() * 24 - 12);
+    const dur = 5200 + Math.random() * 900;
+    const t0 = performance.now();
+    const ease = k => 1 - Math.pow(1 - k, 4);
+    let lastPeg = Math.floor((from + 18) / 36);
+    Sound.whoosh();
+    const g = $('#wheelSpin'), ptr = $('#wheelPointer');
+    const step = now => {
+      const k = Math.min(1, (now - t0) / dur);
+      wheelAngle = from + (to - from) * ease(k);
+      if (g && g.isConnected) g.setAttribute('transform', `rotate(${wheelAngle.toFixed(2)})`);
+      const peg = Math.floor((wheelAngle + 18) / 36);
+      if (peg !== lastPeg) {
+        lastPeg = peg; Sound.tone(1250 + Math.random() * 120, 0.025, 'square', 0.04);
+        if (ptr && ptr.isConnected) { ptr.classList.remove('flick'); void ptr.getBoundingClientRect(); ptr.classList.add('flick'); }
+      }
+      if (k < 1) return requestAnimationFrame(step);
+      wheelBusy = false; wheelAngle = to % 360;
+      renderDrawer(); renderTabs();
+      const msg = $('#wheelMsg');
+      if (res.win) {
+        if (msg) msg.innerHTML = `<b>You won ${esc(obj.name)}!</b> It's yours to keep.`;
+        Sound.cheer(); toast(`You won ${obj.name}!`);
+        if (!$('#sheet').hidden) { celebrate('glitter'); wheelButtons(true); } else apply();
+      } else {
+        if (msg) msg.textContent = `${WHEEL_MISS[seg - 1].replace('…', '')} Not this time.`;
+        Sound.undo(); wheelButtons();
+      }
+    };
+    requestAnimationFrame(step);
   }
 
   /* ---------------- challenges ---------------- */
@@ -808,6 +903,9 @@
       const t = e.target;
       if (t === $('#sheet') || t.closest('[data-close]')) return closeModal($('#sheet'));
       if (t.closest('[data-unlock]')) return doUnlock();
+      if (t.closest('[data-wheel]')) { Sound.tap(); return openWheel(); }
+      if (t.closest('[data-spinnow]')) return spinWheel();
+      if (t.closest('[data-wear]')) { const p = pendingUnlock; closeModal($('#sheet')); pendingUnlock = null; if (p) p.apply(); return; }
       if (t.closest('[data-gochallenge]')) { closeModal($('#sheet')); return openChallengePicker(); }
       if (t.closest('[data-pickdaily]')) { setChallenge(TT.dailyChallenge(), true); closeModal($('#sheet')); Sound.tap(); return; }
       const pk = t.closest('[data-pick]'); if (pk) { setChallenge(TT.CHALLENGES.find(c => c.id === pk.dataset.pick), false); closeModal($('#sheet')); Sound.tap(); return; }

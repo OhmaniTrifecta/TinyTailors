@@ -311,17 +311,33 @@
       { pose: 'tada', label: 'Ta-da!', color: '#ffe17a', keys: ['ArrowUp', '3', 'j', 'J'] },
       { pose: 'jump', label: 'Jump!', color: '#cfa8ff', keys: ['ArrowRight', '4', 'k', 'K'] }
     ];
-    const BEAT = 360, LEAD = 1800, FALL = 1700, WIN = 190, PERFECT = 85;
-    // the song: easy at first, then busier
-    const notes = [];
-    let lastLane = -1;
-    for (let b = 0; b < 72; b++) {
-      const busy = b < 16 ? b % 2 === 0 : b < 40 ? (b % 4 !== 3) : (b % 8 !== 7);
-      if (!busy || b >= 68) continue;
-      let lane = Math.floor(Math.random() * 4); if (lane === lastLane && Math.random() < 0.6) lane = (lane + 1 + Math.floor(Math.random() * 3)) % 4;
-      lastLane = lane; notes.push({ b, lane, state: 0 });
-    }
-    setBar('Runway Rhythm');
+    const LEAD = 2000, FALL = 1700, WIN = 190, PERFECT = 85;
+    // pick a song first (tap ▶ to hear a little of it)
+    setBar('Runway Rhythm', '');
+    const best = loadBest();
+    body().innerHTML = `<div class="rh-pick"><p class="g-say">Pick a song!</p>
+      <div class="rh-songs">${TT.SONGS.map(sg => `<div class="rh-song" style="--card:${sg.color}">
+        <button class="rh-song-go" type="button" data-song="${sg.id}"><span class="rh-song-name">${esc(sg.name)}</span><span class="rh-song-mood">${esc(sg.mood)}</span>
+          <span class="rh-song-meta"><b class="lv lv${sg.level}">${TT.SONG_LEVEL[sg.level]}</b> ${Math.round(60000 / sg.beat)} beats a minute${best['rhythm-' + sg.id] ? ` · best ${best['rhythm-' + sg.id]}` : ''}</span></button>
+        <button class="rh-song-hear" type="button" data-hear="${sg.id}" aria-label="Listen to ${esc(sg.name)}">▶</button></div>`).join('')}</div></div>`;
+    let hearing = null;
+    body().querySelector('.rh-songs').addEventListener('click', e => {
+      const h = e.target.closest('[data-hear]');
+      if (h) {
+        root.querySelectorAll('.rh-song-hear').forEach(b => { b.textContent = '▶'; });
+        if (hearing === h.dataset.hear) { Sound.stopMusic(); hearing = null; return; }
+        hearing = h.dataset.hear; h.textContent = '■';
+        const sg = TT.songById(hearing);
+        Sound.playSong(TT.songEvents(sg, { bars: 4 }).events, 0.05);
+        return;
+      }
+      const g = e.target.closest('[data-song]');
+      if (g) { Sound.stopMusic(); Sound.tap(); play(TT.songById(g.dataset.song)); }
+    });
+    function play(song) {
+    const built = TT.songEvents(song, { countIn: true });
+    const notes = built.chart.notes.map(n => ({ ms: built.msOf(n), lane: n.lane, state: 0 }));
+    setBar(song.name);
     hud(`<span class="g-pill" id="rhScore">0</span>`);
     const frames = {};
     ['stand'].concat(LANES.map(l => l.pose)).forEach(p => { frames[p] = critter(me, `rh-${p}-`, p); });
@@ -343,23 +359,10 @@
       <p class="rh-help">Tap a pose when its star reaches the line. Keys: ← ↓ ↑ → or D F J K</p></div>`;
     const crit = $('#rhCritter'), word = $('#rhWord'), combo = $('#rhCombo');
     let score = 0, streak = 0, bestStreak = 0, hits = 0, perfects = 0, poseTimer = 0, cur = 'stand';
-    // the song is built from the chart: a drum on every beat, and a lane's own note exactly when each star lands,
-    // all scheduled on the audio clock so the stars and the music can't drift apart
-    const LANE_NOTE = [523, 659, 784, 1047];
-    const BASS = [131, 131, 175, 175, 147, 147, 196, 196];
-    const ev = [];
-    for (let k = -4; k < 0; k++) ev.push({ t: k * BEAT / 1000, f: k === -1 ? 1568 : 1175, d: 0.06, type: 'square', v: 0.05 });
-    const lastBeat = notes[notes.length - 1].b + 2;
-    for (let b = 0; b <= lastBeat; b++) {
-      const t = b * BEAT / 1000;
-      ev.push({ t, f: 150, d: 0.16, type: 'sine', v: 0.35, slide: 0.35 });
-      ev.push({ t: t + BEAT / 2000, f: 2400, d: 0.03, type: 'square', v: 0.018 });
-      if (b % 2 === 0) ev.push({ t, f: BASS[(b / 2) % BASS.length], d: 0.3, type: 'sine', v: 0.12 });
-    }
-    notes.forEach(nt => ev.push({ t: nt.b * BEAT / 1000, f: LANE_NOTE[nt.lane], d: 0.2, type: 'triangle', v: 0.13 }));
-    const song = Sound.playSong(ev, LEAD / 1000);
-    const clock = () => song.clockMs();
-    const timeOf = nt => nt.b * BEAT;
+    // the music and the stars come from the same chart and run on the audio clock, so they stay together
+    const music = Sound.playSong(built.events, LEAD / 1000);
+    const clock = () => music.clockMs();
+    const timeOf = nt => nt.ms;
     const setPose = p => { if (cur !== p) { cur = p; crit.innerHTML = frames[p]; } };
     const say = (txt, col) => { word.textContent = txt; word.setAttribute('fill', col); word.animate([{ transform: 'scale(1.25)', transformOrigin: '300px 60px' }, { transform: 'scale(1)', transformOrigin: '300px 60px' }], { duration: 220 }); };
     function hit(lane) {
@@ -382,7 +385,7 @@
     keyHandler = e => { if (e.repeat) return; const i = LANES.findIndex(l => l.keys.includes(e.key)); if (i >= 0) { e.preventDefault(); hit(i); } };
     cleanup.push(() => clearTimeout(poseTimer));
     const els = notes.map((nt, k) => root.querySelector('#rhN' + k));
-    const endAt = notes[notes.length - 1].b * BEAT + 900;
+    const endAt = notes[notes.length - 1].ms + 900;
     loop(() => {
       const now = clock();
       notes.forEach((nt, k) => {
@@ -394,10 +397,12 @@
       if (now > endAt) {
         Sound.stopMusic();
         const acc = hits / notes.length;
-        finish('rhythm', { stars: starsFor(acc, [0.2, 0.45, 0.65, 0.8, 0.92]), score, line: `You hit <b>${hits} of ${notes.length}</b> beats (${perfects} perfect) · best streak ${bestStreak}.`, pay: Math.round(acc * 12) });
+        const bs = loadBest(); if (score > (bs['rhythm-' + song.id] || 0)) { bs['rhythm-' + song.id] = score; saveBest(bs); }
+        finish('rhythm', { stars: starsFor(acc, [0.2, 0.45, 0.65, 0.8, 0.92]), score, line: `<b>${esc(song.name)}</b>: you hit <b>${hits} of ${notes.length}</b> beats (${perfects} perfect) · best streak ${bestStreak}.`, pay: Math.round(acc * 12) });
         return false;
       }
     });
+    }
   }
 
   /* ================= 4. Critter Catch ================= */

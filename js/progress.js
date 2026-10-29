@@ -22,6 +22,18 @@
     save();
     return true;
   };
+  /* lucky wheel: SPIN_COST stitches a spin, SPIN_ODDS chance to win the item.
+     The result is decided (and saved) the moment you spin, so closing the window can't lose a prize. */
+  TT.SPIN_COST = 20;
+  TT.SPIN_ODDS = 0.1;
+  TT.spinFor = function (kind, obj) {
+    if (!TT.isLocked(kind, obj) || P.stitches < TT.SPIN_COST) return null;
+    P.stitches -= TT.SPIN_COST;
+    const win = Math.random() < TT.SPIN_ODDS;
+    if (win) P.unlocked.push(key(kind, obj.id));
+    save();
+    return { win };
+  };
   /* rarity tiers by price, shown on price tags and in the unlock window */
   TT.rarity = n => n >= 220 ? { id: 'legend', name: 'Legendary' } : n >= 150 ? { id: 'super', name: 'Super rare' } : n >= 80 ? { id: 'rare', name: 'Rare' } : { id: 'common', name: 'Common' };
   TT.countUnlockables = function () {
