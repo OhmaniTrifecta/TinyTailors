@@ -306,8 +306,8 @@
       ${can ? `<button class="btn-big" type="button" data-unlock>Unlock for ${obj.locked} stitches</button>`
         : `<p class="modal-sub">You need ${obj.locked - PR.stitches} more stitches. Save up by doing style challenges (the daily one pays double!), games, fashion shows and photos. ${obj.locked - PR.stitches > 90 ? 'Special things take a few days to save for!' : ''}</p><button class="btn-soft" type="button" data-gochallenge>Do a challenge</button>`}
       </div></div>
-      <div class="spin-offer">${WHEEL_ICON}<div><b>Feeling lucky?</b> Spin the wheel for ${TT.SPIN_COST} stitches. If it lands on ${esc(obj.name)}, it's yours! <span>(1 in 10 chance)</span></div>
-        <button class="btn-soft" type="button" data-wheel>Spin the wheel</button></div>`, 'unlock-card');
+      ${TT.canWheel(obj) ? `<div class="spin-offer">${WHEEL_ICON}<div><b>Feeling lucky?</b> Spin the wheel for ${TT.spinCost(obj)} stitches. If it lands on ${esc(obj.name)}, it's yours! <span>(1 in 10 chance)</span></div>
+        <button class="btn-soft" type="button" data-wheel>Spin the wheel</button></div>` : ''}`, 'unlock-card');
   }
   function doUnlock() {
     if (!pendingUnlock) return;
@@ -354,7 +354,7 @@
       <div class="wheel-box">${wheelSVG(kind, obj, pendingUnlock.preview)}</div>
       <div class="wheel-side">
         <p class="wheel-for">Spin to win</p><p class="unlock-name">${esc(obj.name)}</p>
-        <p class="modal-sub">${TT.SPIN_COST} stitches a spin. Land on the gold space and it's yours (1 in 10 chance).</p>
+        <p class="modal-sub">${TT.spinCost(obj)} stitches a spin. Land on the gold space and it's yours (1 in 10 chance).</p>
         <p class="wheel-msg" id="wheelMsg" role="status" aria-live="polite"></p>
         <div class="wheel-actions" id="wheelActions"></div>
       </div></div>`, 'wide-card wheel-card');
@@ -364,9 +364,9 @@
     const box = $('#wheelActions'); if (!box || !pendingUnlock) return;
     const { obj } = pendingUnlock;
     if (won) { box.innerHTML = `<button class="btn-big" type="button" data-wear>Wear it!</button>`; return; }
-    const canSpin = PR.stitches >= TT.SPIN_COST;
-    box.innerHTML = `<button class="btn-big" type="button" data-spinnow ${canSpin ? '' : 'disabled'}>${wheelAngle ? 'Spin again' : 'Spin!'} <span class="price r-common">${SPOOL}${TT.SPIN_COST}</span></button>
-      <p class="wheel-bal">You have <b>${PR.stitches}</b> stitches${canSpin ? '' : ` · you need ${TT.SPIN_COST - PR.stitches} more to spin`}</p>
+    const cost = TT.spinCost(obj), canSpin = PR.stitches >= cost;
+    box.innerHTML = `<button class="btn-big" type="button" data-spinnow ${canSpin ? '' : 'disabled'}>${wheelAngle ? 'Spin again' : 'Spin!'} <span class="price r-common">${SPOOL}${cost}</span></button>
+      <p class="wheel-bal">You have <b>${PR.stitches}</b> stitches${canSpin ? '' : ` · you need ${cost - PR.stitches} more to spin`}</p>
       ${PR.stitches >= obj.locked ? `<button class="btn-soft" type="button" data-unlock>Or just unlock it for ${obj.locked}</button>` : ''}`;
   }
   function spinWheel() {

@@ -22,13 +22,22 @@
     save();
     return true;
   };
-  /* lucky wheel: SPIN_COST stitches a spin, SPIN_ODDS chance to win the item.
+  /* lucky wheel: a spin costs about 13% of the item's price (rounded up to 5), with a SPIN_ODDS chance to win.
+     On average that's a bit MORE than just buying it (about 1.2–1.4×), so the wheel is a lucky shortcut,
+     not a cheaper way to unlock. Only Rare items and up (SPIN_MIN_PRICE+) have a wheel.
      The result is decided (and saved) the moment you spin, so closing the window can't lose a prize. */
-  TT.SPIN_COST = 20;
   TT.SPIN_ODDS = 0.1;
+  TT.SPIN_MIN_PRICE = 80;
+  TT.spinCost = obj => {
+    let c = Math.max(10, Math.round(obj.locked * 0.13 / 5) * 5);
+    while (c * 10 <= obj.locked) c += 5; // never cheaper than buying, on average
+    return c;
+  };
+  TT.canWheel = obj => !!(obj && obj.locked >= TT.SPIN_MIN_PRICE);
   TT.spinFor = function (kind, obj) {
-    if (!TT.isLocked(kind, obj) || P.stitches < TT.SPIN_COST) return null;
-    P.stitches -= TT.SPIN_COST;
+    const cost = TT.spinCost(obj);
+    if (!TT.canWheel(obj) || !TT.isLocked(kind, obj) || P.stitches < cost) return null;
+    P.stitches -= cost;
     const win = Math.random() < TT.SPIN_ODDS;
     if (win) P.unlocked.push(key(kind, obj.id));
     save();
