@@ -757,7 +757,8 @@
     $('#viewerName').textContent = state.name || '';
     renderViewerQR();
   }
-  let viewerQR = false;
+  // QR code shows in full screen by default; the QR button hides it (remembered)
+  let viewerQR = (() => { try { return localStorage.getItem('tt-viewer-qr') !== '0'; } catch (e) { return true; } })();
   function renderViewerQR() {
     const box = $('#viewerQR'), btn = $('#viewer').querySelector('[data-viewact="qr"]');
     if (btn) btn.setAttribute('aria-pressed', viewerQR);
@@ -1254,7 +1255,7 @@
       const a = e.target.closest('[data-viewact]');
       if (a && a.dataset.viewact === 'dance') dance();
       if (a && a.dataset.viewact === 'photo') $('#photo').click();
-      if (a && a.dataset.viewact === 'qr') { viewerQR = !viewerQR; Sound.pop(); renderViewerQR(); }
+      if (a && a.dataset.viewact === 'qr') { viewerQR = !viewerQR; try { localStorage.setItem('tt-viewer-qr', viewerQR ? '1' : '0'); } catch (err) { } Sound.pop(); renderViewerQR(); }
     });
     window.addEventListener('hashchange', () => {
       if (location.hash === '#view') { if (!$('#viewer').hidden) viewHash = true; return; }

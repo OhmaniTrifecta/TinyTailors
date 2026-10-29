@@ -1276,12 +1276,12 @@ body.calm .tfx { opacity: 0; }
 .qr-side .modal-sub { margin: 4px 0 10px; }
 @media (max-width: 420px) { .qr-share { flex-direction: column; text-align: center; } .qr-side { text-align: center; } .qr-share .qr-pic { width: 190px; height: 190px; } }
 .viewer-stage.has-qr { display: flex; align-items: center; justify-content: center; gap: 14px; flex-direction: column; }
-.viewer-stage.has-qr svg#viewerSvg { width: min(100%, calc((100dvh - 120px - clamp(130px, 22vmin, 210px) - 34px) * 0.8696)); }
-@media (orientation: landscape) { .viewer-stage.has-qr { flex-direction: row; } .viewer-stage.has-qr svg#viewerSvg { width: min(calc(100% - clamp(130px, 22vmin, 210px) - 40px), calc((100dvh - 120px) * 0.8696)); } }
-.viewer-qr { flex: none; display: flex; flex-direction: column; align-items: center; gap: 2px; background: #fff; border: 3px solid var(--ink); border-radius: 18px; padding: 8px 8px 6px; box-shadow: var(--shadow); }
+.viewer-stage.has-qr svg#viewerSvg { width: min(100%, calc((100dvh - 120px - clamp(96px, 15vmin, 140px) - 34px) * 0.8696)); }
+@media (orientation: landscape) { .viewer-stage.has-qr { flex-direction: row; } .viewer-stage.has-qr svg#viewerSvg { width: min(calc(100% - clamp(96px, 15vmin, 140px) - 40px), calc((100dvh - 120px) * 0.8696)); } }
+.viewer-qr { flex: none; display: flex; flex-direction: column; align-items: center; gap: 1px; background: #fff; border: 2.5px solid var(--ink); border-radius: 14px; padding: 5px 5px 4px; box-shadow: var(--shadow); }
 .viewer-qr[hidden] { display: none; }
-.viewer-stage .viewer-qr .qr-pic { width: clamp(110px, 22vmin, 190px); height: auto; aspect-ratio: 1; display: block; border: 0; border-radius: 0; box-shadow: none; background: none; }
-.viewer-qr span { font: 800 14px var(--display); color: var(--berry-deep); }
+.viewer-stage .viewer-qr .qr-pic { width: clamp(80px, 13vmin, 120px); height: auto; aspect-ratio: 1; display: block; border: 0; border-radius: 0; box-shadow: none; background: none; }
+.viewer-qr span { font: 800 12px var(--display); color: var(--berry-deep); }
 .viewer-tools .chip[aria-pressed="true"] { background: var(--berry); color: #fff; }
 .photo-qr { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 12px; font: 700 15px var(--body, 'Baloo 2', sans-serif); color: var(--ink); cursor: pointer; }
 .photo-qr[hidden] { display: none; }
